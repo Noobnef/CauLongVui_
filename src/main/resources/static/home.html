@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cầu Lông Vui - Trang Chủ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #5cb85c;
+            --primary-hover: #4cae4c;
+            --dark: #121212;
+            --light: #f5f5f5;
+            --text-main: #333333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--light);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* ── NAVBAR ── */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .logo span { color: var(--dark); }
+
+        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .nav-links a {
+            text-decoration: none; color: var(--dark); font-weight: 600;
+            transition: color 0.3s ease; padding: 6px 10px; border-radius: 8px;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+
+        .btn-reserve {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 10px 20px rgba(92, 184, 92, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-reserve:hover {
+            transform: translateY(-2px);
+            background-color: var(--primary-hover);
+            box-shadow: 0 15px 25px rgba(92, 184, 92, 0.4);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            position: relative;
+            padding: 0 50px;
+        }
+        .blob {
+            position: absolute; background: var(--primary);
+            filter: blur(90px); opacity: 0.15; border-radius: 50%; z-index: 0;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; }
+        .blob-2 { bottom: -10%; right: -10%; width: 600px; height: 600px; }
+
+        .hero-content {
+            text-align: center; z-index: 1; max-width: 800px;
+            animation: fadeIn 1s ease-out;
+        }
+        .hero-title {
+            font-size: 64px; font-weight: 800; line-height: 1.1;
+            margin-bottom: 20px; color: var(--dark);
+        }
+        .hero-title span { color: var(--primary); }
+        .hero-subtitle {
+            font-size: 20px; font-weight: 400; color: #666;
+            margin-bottom: 40px; line-height: 1.6;
+        }
+        .hero-buttons { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+
+        .btn-outline {
+            background-color: transparent; color: var(--dark);
+            border: 2px solid var(--dark); padding: 12px 30px;
+            border-radius: 50px; text-decoration: none; font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-outline:hover { background-color: var(--dark); color: white; }
+
+        .btn-primary-large {
+            background-color: var(--primary); color: white;
+            padding: 14px 40px; border-radius: 50px; text-decoration: none;
+            font-weight: 600; font-size: 18px;
+            box-shadow: 0 10px 20px rgba(92, 184, 92, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-primary-large:hover {
+            transform: translateY(-3px); background-color: var(--primary-hover);
+            box-shadow: 0 15px 30px rgba(92, 184, 92, 0.4);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── COURTS SECTION ── */
+        .courts-section { padding: 80px 50px; background-color: var(--light); }
+
+        .section-header { text-align: center; margin-bottom: 50px; }
+        .section-header h2 { font-size: 36px; color: var(--dark); margin-bottom: 15px; }
+        .section-header p { color: #666; font-size: 18px; }
+
+        .courts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px; max-width: 1200px; margin: 0 auto;
+        }
+
+        /* Court card */
+        .court-card {
+            background: white; border-radius: 15px; overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .court-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+
+        .court-img {
+            height: 200px; background-color: #ddd;
+            background-size: cover; background-position: center; position: relative;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 60px;
+        }
+        .court-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .court-status-badge {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(92, 184, 92, 0.9); color: white;
+            padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .court-status-badge.full { background: rgba(220, 53, 69, 0.9); }
+        .court-status-badge.maintenance { background: rgba(240, 173, 78, 0.9); }
+
+        .court-info { padding: 20px; }
+        .court-name {
+            font-size: 22px; color: var(--dark); margin-bottom: 10px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .court-address {
+            color: #666; margin-bottom: 10px; font-size: 14px;
+            line-height: 1.4; min-height: 40px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .court-owner {
+            color: #888; font-size: 14px; margin-bottom: 20px;
+            border-top: 1px solid #eee; padding-top: 15px;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .court-action { display: flex; justify-content: space-between; align-items: center; }
+        .court-price { font-weight: 600; color: var(--primary); font-size: 18px; }
+
+        .btn-book {
+            background-color: var(--primary); color: white;
+            padding: 8px 20px; border-radius: 8px; text-decoration: none;
+            font-weight: 600; transition: all 0.3s ease; font-family: 'Outfit', sans-serif;
+            font-size: 14px; border: none; cursor: pointer;
+        }
+        .btn-book:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+        .btn-book.disabled { opacity: 0.5; pointer-events: none; background: #999; }
+
+        /* Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #eee 25%, #ddd 50%, #eee 75%);
+            background-size: 400% 100%; animation: shimmer 1.5s infinite; border-radius: 15px;
+        }
+        @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #666; }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+
+        .view-all-wrap { text-align: center; margin-top: 40px; }
+        .view-all-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background-color: var(--primary); color: white;
+            padding: 12px 32px; border-radius: 50px; text-decoration: none;
+            font-weight: 600; font-size: 16px;
+            box-shadow: 0 8px 20px rgba(92, 184, 92, 0.3);
+            transition: all 0.3s ease;
+        }
+        .view-all-btn:hover { transform: translateY(-2px); background-color: var(--primary-hover); }
+
+        /* Toast */
+        #toast-container {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .toast {
+            display: flex; align-items: center; gap: 10px;
+            background: #333; color: #fff; padding: 14px 18px;
+            border-radius: 12px; font-size: 14px; min-width: 260px;
+        }
+        .toast.success { border-left: 4px solid var(--primary); }
+        .toast.error { border-left: 4px solid #dc3545; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 42px; }
+            .hero-subtitle { font-size: 16px; }
+            .nav-links { display: none; }
+            nav { padding: 15px 20px; }
+            .courts-section { padding: 50px 20px; }
+            .section-header h2 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── NAVBAR ── -->
+    <nav>
+        <a href="/" class="logo">🏸 Cầu Lông <span>Vui</span></a>
+        <ul class="nav-links">
+            <li><a href="/" class="active">Trang chủ</a></li>
+            <li><a href="/courts.html">Đặt sân</a></li>
+            <li><a href="/products.html">Cửa hàng</a></li>
+        </ul>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a href="#" class="btn-login" id="loginBtn"
+               style="text-decoration:none;color:var(--dark);font-weight:600;padding:10px 20px;border-radius:50px;transition:all 0.3s ease;">
+               Đăng nhập
+            </a>
+            <a href="/courts.html" class="btn-reserve">Đặt sân ngay</a>
+        </div>
+    </nav>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Sống trọn đam mê <br>trên từng <span>đường cầu</span></h1>
+            <p class="hero-subtitle">Hệ thống đặt sân cầu lông trực tuyến hàng đầu. Tìm kiếm, so sánh và đặt sân ngay lập tức chỉ với vài thao tác đơn giản. Tạm biệt lo hết sân!</p>
+            <div class="hero-buttons">
+                <a href="/products.html" class="btn-outline">Xem cửa hàng</a>
+                <a href="/courts.html" class="btn-primary-large">Khám phá sân</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── COURTS SECTION ── -->
+    <section id="danh-sach-san" class="courts-section">
+        <div class="section-header">
+            <h2>Danh Sách Sân Cầu Lông</h2>
+            <p>Tìm kiếm và đặt sân phù hợp với bạn nhất</p>
+        </div>
+
+        <div class="courts-grid" id="courtsGrid">
+            <!-- Rendered by JS -->
+        </div>
+
+        <div class="view-all-wrap">
+            <a href="/courts.html" class="view-all-btn">
+                Xem tất cả sân →
+            </a>
+        </div>
+    </section>
+
+    <div id="toast-container"></div>
+    <script src="/js/app.js"></script>
+    <script>
+        const courtImages = [
+            'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+            'https://images.pexels.com/photos/3660204/pexels-photo-3660204.jpeg?auto=compress&cs=tinysrgb&w=600',
+            'https://images.unsplash.com/photo-1622279457486-640ca4a4ea6b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+            'https://images.unsplash.com/photo-1599813589139-44fb7425f190?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+        ];
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str || ''));
+            return div.innerHTML;
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'AVAILABLE') return { cls: '', label: 'Trống sân' };
+            if (status === 'BOOKED')    return { cls: 'full', label: 'Hết sân' };
+            return { cls: 'maintenance', label: 'Bảo trì' };
+        }
+
+        async function loadCourtsHome() {
+            const grid = document.getElementById('courtsGrid');
+            grid.innerHTML = Array.from({ length: 4 }, () =>
+                `<div class="skeleton" style="height:320px;"></div>`
+            ).join('');
+
+            try {
+                const courts = await fetchAPI('/courts');
+                if (!courts.length) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🏸</div>
+                            <h3>Chưa có sân nào</h3>
+                            <p>Hệ thống chưa có dữ liệu sân.</p>
+                        </div>`;
+                    return;
+                }
+
+                grid.innerHTML = courts.slice(0, 4).map((court, i) => {
+                    const st = getStatusBadge(court.status);
+                    const img = courtImages[i % courtImages.length];
+                    const canBook = court.status === 'AVAILABLE';
+                    return `
+                        <div class="court-card">
+                            <div class="court-img">
+                                <img src="${img}" alt="${escapeHtml(court.name)}" loading="lazy"
+                                     onerror="this.style.display='none';this.parentElement.innerHTML+='🏸'"/>
+                                <span class="court-status-badge ${st.cls}">${st.label}</span>
+                            </div>
+                            <div class="court-info">
+                                <h3 class="court-name" title="${escapeHtml(court.name)}">${escapeHtml(court.name)}</h3>
+                                <p class="court-address">
+                                    📍 ${escapeHtml(court.description || 'TP. Hồ Chí Minh')}
+                                </p>
+                                <p class="court-owner">
+                                    👤 Chủ sân: <strong>${escapeHtml(court.name)}</strong>
+                                </p>
+                                <div class="court-action">
+                                    <span class="court-price">${formatCurrency(court.pricePerHour)}/giờ</span>
+                                    <a href="/courts.html" class="btn-book ${canBook ? '' : 'disabled'}">
+                                        ${canBook ? 'Đặt Sân' : 'Hết Chỗ'}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+
+            } catch (err) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <h3>Không thể tải danh sách sân</h3>
+                        <p>${err.message}</p>
+                    </div>`;
+            }
+        }
+
+        // ── Auth state
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        const loginBtn = document.getElementById('loginBtn');
+        if (loggedInUser && loginBtn) {
+            loginBtn.textContent = 'Xin chào, ' + loggedInUser;
+            loginBtn.href = '#';
+            const logoutBtn = document.createElement('a');
+            logoutBtn.href = '#';
+            logoutBtn.textContent = 'Đăng xuất';
+            logoutBtn.style.cssText = 'text-decoration:none;color:#dc3545;font-weight:600;padding:8px 16px;border-radius:50px;border:2px solid #dc3545;transition:all 0.3s ease;';
+            logoutBtn.onmouseover = function() { this.style.backgroundColor='#dc3545'; this.style.color='white'; };
+            logoutBtn.onmouseout  = function() { this.style.backgroundColor='transparent'; this.style.color='#dc3545'; };
+            logoutBtn.onclick = (e) => {
+                e.preventDefault();
+                if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                    localStorage.removeItem('loggedInUser');
+                    window.location.reload();
+                }
+            };
+            loginBtn.parentNode.insertBefore(logoutBtn, loginBtn.nextSibling);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCourtsHome);
+    </script>
+</body>
+</html>
