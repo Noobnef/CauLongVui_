@@ -16,6 +16,7 @@ public class CourtDTO {
     private String description;
     private Double pricePerHour;
     private Court.CourtStatus status;
+    private String imageUrl;
 
     public static CourtDTO fromEntity(Court court) {
         return CourtDTO.builder()
@@ -24,6 +25,7 @@ public class CourtDTO {
                 .description(court.getDescription())
                 .pricePerHour(court.getPricePerHour())
                 .status(court.getStatus())
+                .imageUrl(court.getImageUrl())
                 .build();
     }
 
@@ -34,6 +36,7 @@ public class CourtDTO {
                 .description(this.description)
                 .pricePerHour(this.pricePerHour)
                 .status(this.status != null ? this.status : Court.CourtStatus.AVAILABLE)
+                .imageUrl(this.imageUrl)
                 .build();
     }
 }

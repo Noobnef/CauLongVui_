@@ -54,6 +54,7 @@ public class CourtService {
         if (courtDTO.getStatus() != null) {
             existing.setStatus(courtDTO.getStatus());
         }
+        existing.setImageUrl(courtDTO.getImageUrl());
         return CourtDTO.fromEntity(courtRepository.save(existing));
     }
 
