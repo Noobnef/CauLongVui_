@@ -3,6 +3,7 @@ package com.example.CauLongVui.service;
 import com.example.CauLongVui.dto.AuthResponse;
 import com.example.CauLongVui.dto.LoginRequest;
 import com.example.CauLongVui.dto.RegisterRequest;
+import com.example.CauLongVui.dto.UpdateProfileRequest;
 import com.example.CauLongVui.entity.User;
 import com.example.CauLongVui.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,32 @@ public class AuthService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
         return toResponse(user, null);
+    }
+
+    // ── Cập nhật thông tin cá nhân
+    public AuthResponse updateProfile(UpdateProfileRequest req) {
+        User user = userRepository.findById(req.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+
+        // Cập nhật họ tên
+        if (req.getFullName() != null && !req.getFullName().isBlank()) {
+            user.setFullName(req.getFullName().trim());
+        }
+        // Cập nhật số điện thoại
+        if (req.getPhone() != null) {
+            user.setPhone(req.getPhone().trim().isEmpty() ? null : req.getPhone().trim());
+        }
+        // Đổi mật khẩu (chỉ khi client có gửi newPassword)
+        if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
+            if (req.getCurrentPassword() == null
+                    || !passwordEncoder.matches(req.getCurrentPassword(), user.getPassword())) {
+                throw new IllegalArgumentException("Mật khẩu hiện tại không đúng");
+            }
+            user.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        }
+
+        userRepository.save(user);
+        return toResponse(user, "Cập nhật thông tin thành công");
     }
 
     // ── Helper

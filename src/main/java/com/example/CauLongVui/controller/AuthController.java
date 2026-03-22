@@ -4,6 +4,7 @@ import com.example.CauLongVui.dto.ApiResponse;
 import com.example.CauLongVui.dto.AuthResponse;
 import com.example.CauLongVui.dto.LoginRequest;
 import com.example.CauLongVui.dto.RegisterRequest;
+import com.example.CauLongVui.dto.UpdateProfileRequest;
 import com.example.CauLongVui.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,5 +41,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> getMe(@RequestParam Long id) {
         AuthResponse response = authService.getById(id);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // PUT /api/auth/update — Cập nhật thông tin cá nhân
+    @PutMapping("/update")
+    public ResponseEntity<ApiResponse<AuthResponse>> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest req) {
+        AuthResponse response = authService.updateProfile(req);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật thông tin thành công", response));
     }
 }

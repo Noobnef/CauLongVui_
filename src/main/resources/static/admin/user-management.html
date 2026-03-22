@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý Người dùng – Cầu Lông Vui</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <link rel="stylesheet" href="/css/header-footer.css" />
+  <style>
+    body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); }
+    .mgmt-page { padding: 90px 0 60px; min-height: 100vh; }
+    .mgmt-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* Header */
+    .mgmt-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px; margin-bottom: 28px;
+    }
+    .mgmt-title { font-size: 26px; font-weight: 900; color: var(--dark); }
+    .mgmt-title span { color: var(--green); }
+    .breadcrumb { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .breadcrumb a { color: var(--green); text-decoration: none; }
+
+    /* Stats bar */
+    .stats-bar { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+    .stat-chip {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 18px;
+      font-size: 13px; font-weight: 600; color: var(--dark);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .stat-chip .val { font-size: 22px; font-weight: 900; color: var(--green); }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      align-items: center; margin-bottom: 20px;
+    }
+    .search-wrap { position: relative; }
+    .search-wrap::before {
+      content: '🔍'; position: absolute; left: 12px;
+      top: 50%; transform: translateY(-50%); font-size: 13px;
+    }
+    .toolbar input[type="text"] {
+      padding: 10px 14px 10px 38px; min-width: 240px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; outline: none; background: var(--white);
+      font-family: inherit;
+    }
+    .toolbar input[type="text"]:focus { border-color: var(--green); }
+    .toolbar select {
+      padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 14px; background: var(--white);
+      font-family: inherit; outline: none; cursor: pointer;
+    }
+    .toolbar select:focus { border-color: var(--green); }
+
+    /* Table */
+    .table-wrap {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f8f9fa; }
+    th {
+      padding: 14px 16px; text-align: left;
+      font-size: 12px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 13px 16px; font-size: 14px; color: var(--dark);
+      border-bottom: 1px solid #f1f5f9; vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8fffe; }
+
+    /* User cell */
+    .user-cell { display: flex; align-items: center; gap: 12px; }
+    .user-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green), #1a7a3c);
+      color: #fff; font-size: 16px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .user-name { font-weight: 700; font-size: 14px; }
+    .user-email { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 11px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+    }
+    .badge-admin    { background: #fef3c7; color: #92400e; }
+    .badge-staff    { background: #dbeafe; color: #1e40af; }
+    .badge-customer { background: #dcfce7; color: #15803d; }
+    .badge-active   { background: #dcfce7; color: #15803d; }
+    .badge-inactive { background: #fee2e2; color: #b91c1c; }
+
+    /* Action buttons */
+    .action-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-role {
+      background: #eff6ff; color: #1d4ed8; border: none;
+      border-radius: 8px; padding: 6px 12px; font-size: 12.5px;
+      font-weight: 700; cursor: pointer; transition: all .2s; font-family: inherit;
+    }
+    .btn-role:hover { background: #1d4ed8; color: #fff; }
+    .btn-toggle-active {
+      border: none; border-radius: 8px; padding: 6px 12px; font-size: 12.5px;
+      font-weight: 700; cursor: pointer; transition: all .2s; font-family: inherit;
+    }
+    .btn-toggle-active.deactivate { background: #fee2e2; color: #dc2626; }
+    .btn-toggle-active.deactivate:hover { background: #dc2626; color: #fff; }
+    .btn-toggle-active.activate { background: #dcfce7; color: #15803d; }
+    .btn-toggle-active.activate:hover { background: #15803d; color: #fff; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      z-index: 1000; display: none; align-items: center;
+      justify-content: center; padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 18px; width: 100%;
+      max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      animation: modalIn .25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity:0; transform:translateY(18px) scale(.97); }
+      to   { opacity:1; transform:translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 26px 18px; border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 18px; font-weight: 800; color: var(--dark); }
+    .modal-close {
+      background: none; border: none; font-size: 20px;
+      cursor: pointer; color: var(--muted); line-height: 1;
+      transition: color .2s; padding: 4px;
+    }
+    .modal-close:hover { color: var(--dark); }
+    .modal-body { padding: 22px 26px; }
+    .modal-footer {
+      display: flex; gap: 12px; justify-content: flex-end;
+      padding: 16px 26px; border-top: 1px solid var(--border);
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block; font-size: 13px; font-weight: 700;
+      color: var(--dark); margin-bottom: 7px;
+    }
+    .form-group select {
+      width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color .2s; box-sizing: border-box;
+      background: #fff; cursor: pointer;
+    }
+    .form-group select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22,163,74,.08); }
+    .user-info-box {
+      background: var(--bg); border-radius: 12px; padding: 16px;
+      margin-bottom: 18px; display: flex; align-items: center; gap: 12px;
+    }
+    .uib-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--green), #1a7a3c);
+      color: #fff; font-size: 20px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .uib-name { font-weight: 800; font-size: 15px; }
+    .uib-email { font-size: 12.5px; color: var(--muted); }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 22px; border-radius: 10px; font-size: 14px;
+      font-weight: 700; cursor: pointer; border: none;
+      transition: all .2s; font-family: inherit;
+    }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: #14532d; }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    .btn-secondary { background: #f1f5f9; color: var(--dark); }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    /* Empty / Loading */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .empty-state p { color: var(--muted); font-size: 14px; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .7s linear infinite; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Access denied */
+    .access-denied { text-align: center; padding: 120px 24px; }
+
+    /* Toast */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px;
+      z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+    }
+    .toast {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 20px; border-radius: 12px; min-width: 280px;
+      font-size: 14px; font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,.12); animation: toastIn .3s ease;
+    }
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } }
+    .toast.success { background: #16a34a; color: #fff; }
+    .toast.error   { background: #dc2626; color: #fff; }
+    .toast.warning { background: #d97706; color: #fff; }
+  </style>
+</head>
+<body>
+<div id="header-placeholder"></div>
+
+<!-- Access Denied -->
+<div id="accessDenied" style="display:none;" class="mgmt-page">
+  <div class="access-denied">
+    <div style="font-size:64px">🚫</div>
+    <h2>Không có quyền truy cập</h2>
+    <p>Trang này chỉ dành cho Quản trị viên.</p>
+    <a href="/" class="btn btn-primary" style="display:inline-flex;margin-top:20px;text-decoration:none;">Về trang chủ</a>
+  </div>
+</div>
+
+<!-- Main Page -->
+<div id="mgmtPage" style="display:none;" class="mgmt-page">
+  <div class="mgmt-container">
+
+    <!-- Header -->
+    <div class="mgmt-header">
+      <div>
+        <div class="breadcrumb">
+          <a href="/admin/admin.html">⚙️ Quản trị</a> › Quản lý Người dùng
+        </div>
+        <h1 class="mgmt-title">👥 Quản lý <span>Người dùng</span></h1>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-chip"><span class="val" id="statTotal">—</span> Tổng người dùng</div>
+      <div class="stat-chip"><span class="val" id="statAdmin">—</span> Quản trị viên</div>
+      <div class="stat-chip"><span class="val" id="statStaff">—</span> Nhân viên</div>
+      <div class="stat-chip"><span class="val" id="statCustomer">—</span> Khách hàng</div>
+      <div class="stat-chip"><span class="val" id="statActive">—</span> Đang hoạt động</div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Tìm tên hoặc email..." oninput="applyFilter()" />
+      </div>
+      <select id="filterRole" onchange="applyFilter()">
+        <option value="">Tất cả vai trò</option>
+        <option value="ADMIN">Quản trị viên</option>
+        <option value="STAFF">Nhân viên</option>
+        <option value="CUSTOMER">Khách hàng</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:44px">#</th>
+            <th>Người dùng</th>
+            <th>Số điện thoại</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th style="width:200px">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
+          <tr><td colspan="6">
+            <div class="empty-state">
+              <div class="icon">⏳</div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Đổi quyền -->
+<div class="modal-backdrop" id="roleModal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2 class="modal-title">🔐 Phân quyền người dùng</h2>
+      <button class="modal-close" onclick="closeModal('roleModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="user-info-box">
+        <div class="uib-avatar" id="modalAvatar"></div>
+        <div>
+          <div class="uib-name" id="modalName"></div>
+          <div class="uib-email" id="modalEmail"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Chọn vai trò mới</label>
+        <select id="newRole">
+          <option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
+          <option value="STAFF">Nhân viên (STAFF)</option>
+          <option value="ADMIN">Quản trị viên (ADMIN)</option>
+        </select>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:-8px;">
+        ⚠️ Thay đổi quyền có thể ảnh hưởng đến những gì người dùng có thể truy cập trong hệ thống.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('roleModal')">Huỷ</button>
+      <button class="btn btn-primary" id="saveRoleBtn" onclick="saveRole()">
+        💾 Lưu quyền
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+
+<script src="/js/app.js"></script>
+<script>
+/* ══════════ State ══════════ */
+let allUsers = [];
+let pendingRoleUserId = null;
+
+/* ══════════ Init ══════════ */
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = getCurrentUser();
+  if (!user || user.role !== 'ADMIN') {
+    document.getElementById('accessDenied').style.display = 'block';
+    return;
+  }
+  document.getElementById('mgmtPage').style.display = 'block';
+  await loadUsers();
+});
+
+/* ══════════ Load & Render ══════════ */
+async function loadUsers() {
+  try {
+    const res  = await fetch('/api/users');
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message || 'Không thể tải danh sách người dùng');
+    allUsers = json.data || [];
+    updateStats(allUsers);
+    applyFilter();
+  } catch (err) {
+    document.getElementById('userTableBody').innerHTML = `
+      <tr><td colspan="6">
+        <div class="empty-state">
+          <div class="icon">⚠️</div>
+          <h3>Không thể tải dữ liệu</h3>
+          <p>${escHtml(err.message)}</p>
+        </div>
+      </td></tr>`;
+    showToast('Lỗi: ' + err.message, 'error');
+  }
+}
+
+function updateStats(users) {
+  document.getElementById('statTotal').textContent    = users.length;
+  document.getElementById('statAdmin').textContent    = users.filter(u => u.role === 'ADMIN').length;
+  document.getElementById('statStaff').textContent    = users.filter(u => u.role === 'STAFF').length;
+  document.getElementById('statCustomer').textContent = users.filter(u => u.role === 'CUSTOMER').length;
+  // active field may not be in AuthResponse — show total as fallback
+  document.getElementById('statActive').textContent   = users.length;
+}
+
+function applyFilter() {
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const role   = document.getElementById('filterRole').value;
+
+  let filtered = allUsers;
+  if (role)   filtered = filtered.filter(u => u.role === role);
+  if (search) filtered = filtered.filter(u =>
+    (u.fullName || '').toLowerCase().includes(search) ||
+    (u.email    || '').toLowerCase().includes(search) ||
+    (u.phone    || '').includes(search)
+  );
+  renderTable(filtered);
+}
+
+function renderTable(users) {
+  const tbody = document.getElementById('userTableBody');
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="6">
+      <div class="empty-state">
+        <div class="icon">👥</div>
+        <h3>Không có người dùng</h3>
+        <p>Thử thay đổi bộ lọc tìm kiếm.</p>
+      </div></td></tr>`;
+    return;
+  }
+
+  const currentUser = getCurrentUser();
+
+  tbody.innerHTML = users.map((u, idx) => {
+    const initial    = (u.fullName || u.email || '?').charAt(0).toUpperCase();
+    const roleBadge  = roleBadgeHtml(u.role);
+    const isSelf     = currentUser && currentUser.id === u.id;
+    const isActive   = true; // AuthResponse doesn't expose active field yet
+
+    return `<tr>
+      <td style="color:var(--muted);font-size:12px;">${idx + 1}</td>
+      <td>
+        <div class="user-cell">
+          <div class="user-avatar">${escHtml(initial)}</div>
+          <div>
+            <div class="user-name">${escHtml(u.fullName || '—')} ${isSelf ? '<span style="font-size:11px;color:var(--green);font-weight:700;">(Bạn)</span>' : ''}</div>
+            <div class="user-email">${escHtml(u.email || '—')}</div>
+          </div>
+        </div>
+      </td>
+      <td>${escHtml(u.phone || '—')}</td>
+      <td>${roleBadge}</td>
+      <td><span class="badge badge-active">✅ Hoạt động</span></td>
+      <td>
+        <div class="action-btns">
+          ${!isSelf ? `<button class="btn-role" onclick="openRoleModal(${u.id})">🔐 Đổi quyền</button>` : `<span style="font-size:12px;color:var(--muted);">—</span>`}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function roleBadgeHtml(role) {
+  const map = {
+    ADMIN:    '<span class="badge badge-admin">Quản trị viên</span>',
+    STAFF:    '<span class="badge badge-staff">Nhân viên</span>',
+    CUSTOMER: '<span class="badge badge-customer">Khách hàng</span>',
+  };
+  return map[role] || `<span class="badge">${escHtml(role)}</span>`;
+}
+
+/* ══════════ Role Modal ══════════ */
+function openRoleModal(userId) {
+  const u = allUsers.find(x => x.id === userId);
+  if (!u) return;
+  pendingRoleUserId = userId;
+
+  const initial = (u.fullName || u.email || '?').charAt(0).toUpperCase();
+  document.getElementById('modalAvatar').textContent = initial;
+  document.getElementById('modalName').textContent   = u.fullName || '—';
+  document.getElementById('modalEmail').textContent  = u.email    || '—';
+  document.getElementById('newRole').value           = u.role || 'CUSTOMER';
+
+  openModal('roleModal');
+}
+
+async function saveRole() {
+  if (!pendingRoleUserId) return;
+  const newRole = document.getElementById('newRole').value;
+  const btn = document.getElementById('saveRoleBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Đang lưu...';
+
+  try {
+    const res  = await fetch(`/api/users/${pendingRoleUserId}/role?role=${newRole}`, {
+      method: 'PATCH',
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Cập nhật thất bại');
+
+    // Update local data
+    const idx = allUsers.findIndex(u => u.id === pendingRoleUserId);
+    if (idx !== -1) allUsers[idx].role = newRole;
+
+    updateStats(allUsers);
+    applyFilter();
+    closeModal('roleModal');
+    showToast(`✅ Đã cập nhật quyền thành ${roleLabel(newRole)}!`, 'success');
+  } catch (err) {
+    showToast('❌ Lỗi: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '💾 Lưu quyền';
+    pendingRoleUserId = null;
+  }
+}
+
+function roleLabel(role) {
+  const m = { ADMIN: 'Quản trị viên', STAFF: 'Nhân viên', CUSTOMER: 'Khách hàng' };
+  return m[role] || role;
+}
+
+/* ══════════ Modal helpers ══════════ */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.modal-backdrop').forEach(bd => {
+  bd.addEventListener('click', e => { if (e.target === bd) closeModal(bd.id); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape')
+    document.querySelectorAll('.modal-backdrop.open').forEach(m => closeModal(m.id));
+});
+
+/* ══════════ Helpers ══════════ */
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(s || ''));
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

@@ -161,39 +161,72 @@ function initHeaderEvents() {
   if (!navActions) return;
 
   if (user) {
+    if (user.role === 'ADMIN') {
+      const navLinks = document.querySelector('.nav-links');
+      if (navLinks) {
+        navLinks.style.display = 'none';
+      }
+    }
+    
     // Đã đăng nhập — hiển thị avatar + tên + dropdown
     const cartCount = getCartCount();
-    navActions.innerHTML = `
-      <a href="/cart.html" class="nav-cart-btn" id="navCartBtn" title="Giỏ hàng">
-        🛒
-        <span class="cart-badge" id="cartBadge" style="${cartCount > 0 ? '' : 'display:none'}"> ${cartCount}</span>
-      </a>
-      <div class="nav-user-menu" id="navUserMenu">
-        <button class="nav-user-btn" onclick="toggleUserMenu()" id="navUserBtn">
-          <div class="nav-user-avatar">${(user.fullName || 'U').charAt(0).toUpperCase()}</div>
-          <span class="nav-user-name">${(user.fullName || user.email).split(' ').slice(-1)[0]}</span>
-          <span style="font-size:11px;color:var(--muted)">▾</span>
-        </button>
-        <div class="nav-user-dropdown" id="navUserDropdown" style="display:none;">
-          <div class="dropdown-header">
-            <div class="dropdown-name">${user.fullName}</div>
-            <div class="dropdown-role">${roleLabel(user.role)}</div>
+
+    if (user.role === 'ADMIN') {
+      // ── ADMIN header: chỉ hiện các link quản lý, không có giỏ hàng hay đặt sân
+      navActions.innerHTML = `
+        <a href="/admin/court-management.html"  class="btn-manage">🏸 Quản lý sân</a>
+        <a href="/admin/product-management.html" class="btn-manage">🛍️ Quản lý sản phẩm</a>
+        <a href="/admin/user-management.html"    class="btn-manage">👥 Quản lý người dùng</a>
+        <div class="nav-user-menu" id="navUserMenu">
+          <button class="nav-user-btn" onclick="toggleUserMenu()" id="navUserBtn">
+            <div class="nav-user-avatar">${(user.fullName || 'A').charAt(0).toUpperCase()}</div>
+            <span class="nav-user-name">${(user.fullName || user.email).split(' ').slice(-1)[0]}</span>
+            <span style="font-size:11px;color:var(--muted)">▾</span>
+          </button>
+          <div class="nav-user-dropdown" id="navUserDropdown" style="display:none;">
+            <div class="dropdown-header">
+              <div class="dropdown-name">${user.fullName}</div>
+              <div class="dropdown-role">${roleLabel(user.role)}</div>
+            </div>
+            <a href="/profile.html"                   class="dropdown-item">👤 Tài khoản của tôi</a>
+            <a href="/admin/admin.html"               class="dropdown-item">⚙️ Quản trị hệ thống</a>
+            <a href="/admin/court-management.html"    class="dropdown-item">📋 Quản lý sân</a>
+            <a href="/admin/product-management.html"  class="dropdown-item">🛍️ Quản lý sản phẩm</a>
+            <a href="/admin/user-management.html"     class="dropdown-item">👥 Quản lý người dùng</a>
+            <a href="#" class="dropdown-item dropdown-logout" id="logoutBtn">🚪 Đăng xuất</a>
           </div>
-          <a href="/profile.html" class="dropdown-item">👤 Tài khoản của tôi</a>
-          ${user.role !== 'ADMIN' ? `
-          <a href="/my-bookings.html" class="dropdown-item">🏸 Sân đã đặt</a>
-          <a href="/cart.html" class="dropdown-item">🛒 Giỏ hàng của tôi</a>
-          <a href="/my-orders.html" class="dropdown-item">📋 Mặt hàng đã đặt</a>
-          ` : ''}
-          ${user.role === 'ADMIN' ? '<a href="/admin/admin.html" class="dropdown-item">⚙️ Quản trị hệ thống</a>' : ''}
-          ${(user.role === 'ADMIN' || user.role === 'STAFF') ? '<a href="/admin/court-management.html" class="dropdown-item">📋 Quản lý sân</a>' : ''}
-          ${user.role === 'ADMIN' ? '<a href="/admin/product-management.html" class="dropdown-item">🛍️ Quản lý sản phẩm</a>' : ''}
-          <a href="#" class="dropdown-item dropdown-logout" id="logoutBtn">🚪 Đăng xuất</a>
         </div>
-      </div>
-      ${(user.role === 'ADMIN' || user.role === 'STAFF') ? `<a href="/admin/court-management.html" class="btn-manage">⚙️ Quản lý</a>` : ''}
-      <a href="/courts.html" class="btn-nav-cta">Đặt sân ngay</a>
-    `;
+      `;
+    } else {
+      // ── Non-admin: giỏ hàng + dropdown đầy đủ + nút đặt sân
+      navActions.innerHTML = `
+        <a href="/cart.html" class="nav-cart-btn" id="navCartBtn" title="Giỏ hàng">
+          🛒
+          <span class="cart-badge" id="cartBadge" style="${cartCount > 0 ? '' : 'display:none'}"> ${cartCount}</span>
+        </a>
+        <div class="nav-user-menu" id="navUserMenu">
+          <button class="nav-user-btn" onclick="toggleUserMenu()" id="navUserBtn">
+            <div class="nav-user-avatar">${(user.fullName || 'U').charAt(0).toUpperCase()}</div>
+            <span class="nav-user-name">${(user.fullName || user.email).split(' ').slice(-1)[0]}</span>
+            <span style="font-size:11px;color:var(--muted)">▾</span>
+          </button>
+          <div class="nav-user-dropdown" id="navUserDropdown" style="display:none;">
+            <div class="dropdown-header">
+              <div class="dropdown-name">${user.fullName}</div>
+              <div class="dropdown-role">${roleLabel(user.role)}</div>
+            </div>
+            <a href="/profile.html"     class="dropdown-item">👤 Tài khoản của tôi</a>
+            <a href="/my-bookings.html" class="dropdown-item">🏸 Sân đã đặt</a>
+            <a href="/cart.html"        class="dropdown-item">🛒 Giỏ hàng của tôi</a>
+            <a href="/my-orders.html"   class="dropdown-item">📋 Mặt hàng đã đặt</a>
+            ${user.role === 'STAFF' ? '<a href="/admin/court-management.html" class="dropdown-item">📋 Quản lý sân</a>' : ''}
+            <a href="#" class="dropdown-item dropdown-logout" id="logoutBtn">🚪 Đăng xuất</a>
+          </div>
+        </div>
+        ${user.role === 'STAFF' ? `<a href="/admin/court-management.html" class="btn-manage">⚙️ Quản lý</a>` : ''}
+        <a href="/courts.html" class="btn-nav-cta">Đặt sân ngay</a>
+      `;
+    }
 
     document.getElementById('logoutBtn').addEventListener('click', (e) => {
       e.preventDefault();
@@ -272,7 +305,7 @@ function updateCartBadge() {
 }
 
 function roleLabel(role) {
-  const map = { ADMIN: '👑 Quản trị viên', STAFF: '🛠️ Nhân viên', CUSTOMER: '🧍 Khách hàng' };
+  const map = { ADMIN: 'Quản trị viên', STAFF: 'Nhân viên', CUSTOMER: 'Khách hàng' };
   return map[role] || role;
 }
 
