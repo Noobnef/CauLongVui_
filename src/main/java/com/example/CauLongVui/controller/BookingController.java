@@ -43,10 +43,12 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.success(bookingService.getBookingById(id)));
     }
 
-    // POST /api/bookings — đặt sân mới
+    // POST /api/bookings — đặt sân mới (optional holdId from RSocket hold)
     @PostMapping
-    public ResponseEntity<ApiResponse<BookingDTO>> createBooking(@RequestBody BookingDTO bookingDTO) {
-        BookingDTO created = bookingService.createBooking(bookingDTO);
+    public ResponseEntity<ApiResponse<BookingDTO>> createBooking(
+            @RequestBody BookingDTO bookingDTO,
+            @RequestParam(required = false) String holdId) {
+        BookingDTO created = bookingService.createBooking(bookingDTO, holdId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Đặt sân thành công", created));
     }

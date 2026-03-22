@@ -16,7 +16,8 @@ import java.util.UUID;
 @RequestMapping("/api/upload")
 public class UploadController {
 
-    // Lưu vào thư mục src/main/resources/static/uploads/ (được Spring serve tự động qua /uploads/**)
+    // Lưu vào thư mục src/main/resources/static/uploads/ (được Spring serve tự động
+    // qua /uploads/**)
     private static final String UPLOAD_DIR = "src/main/resources/static/uploads/";
 
     @PostMapping
@@ -33,7 +34,8 @@ public class UploadController {
                 file.getOriginalFilename() != null ? file.getOriginalFilename() : "image");
         String ext = "";
         int dotIdx = originalName.lastIndexOf('.');
-        if (dotIdx >= 0) ext = originalName.substring(dotIdx).toLowerCase();
+        if (dotIdx >= 0)
+            ext = originalName.substring(dotIdx).toLowerCase();
 
         if (!ext.matches("\\.(jpg|jpeg|png|gif|webp)")) {
             return ResponseEntity.badRequest()

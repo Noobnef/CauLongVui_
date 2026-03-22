@@ -24,6 +24,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final CourtRepository courtRepository;
     private final UserRepository userRepository;
+    private final BookingHoldService bookingHoldService;
 
     @Transactional(readOnly = true)
     public List<BookingDTO> getAllBookings() {
@@ -60,7 +61,7 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    public BookingDTO createBooking(BookingDTO bookingDTO) {
+    public BookingDTO createBooking(BookingDTO bookingDTO, String holdId) {
         // Validate court exists
         Court court = courtRepository.findById(bookingDTO.getCourtId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sân với ID: " + bookingDTO.getCourtId()));
@@ -70,14 +71,22 @@ public class BookingService {
             throw new BadRequestException("Giờ bắt đầu phải trước giờ kết thúc");
         }
 
-        // Check for overlapping bookings in Java to avoid SQL Server type conversion issues with LocalTime
-        List<Booking> dayBookings = bookingRepository.findByCourtIdAndBookingDate(bookingDTO.getCourtId(), bookingDTO.getBookingDate());
-        boolean hasOverlap = dayBookings.stream()
-                .filter(b -> b.getStatus() != Booking.BookingStatus.CANCELLED)
-                .anyMatch(b -> bookingDTO.getStartTime().isBefore(b.getEndTime()) && bookingDTO.getEndTime().isAfter(b.getStartTime()));
+        // If holdId is provided, verify it — otherwise fall back to DB overlap check
+        if (holdId != null && !holdId.isBlank()) {
+            boolean holdValid = bookingHoldService.confirmHold(holdId);
+            if (!holdValid) {
+                throw new BadRequestException("Giữ chỗ đã hết hạn hoặc không hợp lệ. Vui lòng giữ chỗ lại.");
+            }
+        } else {
+            // Legacy path: check DB overlaps directly
+            List<Booking> dayBookings = bookingRepository.findByCourtIdAndBookingDate(bookingDTO.getCourtId(), bookingDTO.getBookingDate());
+            boolean hasOverlap = dayBookings.stream()
+                    .filter(b -> b.getStatus() != Booking.BookingStatus.CANCELLED)
+                    .anyMatch(b -> bookingDTO.getStartTime().isBefore(b.getEndTime()) && bookingDTO.getEndTime().isAfter(b.getStartTime()));
 
-        if (hasOverlap) {
-            throw new BadRequestException("Sân đã được đặt trong khung giờ này. Vui lòng chọn khung giờ khác.");
+            if (hasOverlap) {
+                throw new BadRequestException("Sân đã được đặt trong khung giờ này. Vui lòng chọn khung giờ khác.");
+            }
         }
 
         // Calculate total price
@@ -98,6 +107,11 @@ public class BookingService {
                 .build();
 
         return BookingDTO.fromEntity(bookingRepository.save(booking));
+    }
+
+    /** Overload for backward compatibility (no holdId). */
+    public BookingDTO createBooking(BookingDTO bookingDTO) {
+        return createBooking(bookingDTO, null);
     }
 
     public BookingDTO updateBookingStatus(Long id, Booking.BookingStatus status) {
