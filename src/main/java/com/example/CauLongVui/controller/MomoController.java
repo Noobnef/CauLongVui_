@@ -63,12 +63,12 @@ public class MomoController {
      */
     @GetMapping("/momo-return")
     public org.springframework.web.servlet.view.RedirectView momoReturn(
-            @RequestParam(required = false) String orderId,
-            @RequestParam(required = false) Long amount,
-            @RequestParam(required = false) String orderInfo,
-            @RequestParam(required = false) Integer resultCode,
-            @RequestParam(required = false) String message,
-            @RequestParam(required = false) Long transId) {
+            @RequestParam(name = "orderId",   required = false) String orderId,
+            @RequestParam(name = "amount",    required = false) Long amount,
+            @RequestParam(name = "orderInfo", required = false) String orderInfo,
+            @RequestParam(name = "resultCode",required = false) Integer resultCode,
+            @RequestParam(name = "message",   required = false) String message,
+            @RequestParam(name = "transId",   required = false) Long transId) {
 
         boolean success = resultCode != null && resultCode == 0;
         log.info("MoMo return: orderId={}, resultCode={}, transId={}", orderId, resultCode, transId);

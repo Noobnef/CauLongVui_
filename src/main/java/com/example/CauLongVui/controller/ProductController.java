@@ -20,7 +20,7 @@ public class ProductController {
     // GET /api/products — lấy tất cả hoặc tìm kiếm theo tên
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductDTO>>> getAllProducts(
-            @RequestParam(required = false) String search) {
+            @RequestParam(name = "search", required = false) String search) {
         List<ProductDTO> products = (search != null && !search.isBlank())
                 ? productService.searchByName(search)
                 : productService.getAllProducts();

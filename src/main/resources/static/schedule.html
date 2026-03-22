@@ -108,8 +108,42 @@
       thRow.appendChild(th);
     });
 
-    function buildGrid() {
+    async function buildGrid() {
+      console.log('Building grid for date:', dp.value, 'courtId:', courtId);
       const tbody = document.getElementById('grid-body');
+      tbody.innerHTML = '<tr><td colspan="100" style="text-align:center; padding:20px;">Đang tải dữ liệu...</td></tr>';
+
+      // Lấy danh sách slot đã đặt từ server
+      let bookedRanges = [];
+      try {
+        const res = await fetch(`/api/bookings/slots?courtId=${courtId}&date=${dp.value}`);
+        if (!res.ok) throw new Error('API Error: ' + res.status);
+        const json = await res.json();
+        console.log('API Response:', json);
+        if (json.success && json.data) {
+          bookedRanges = json.data;
+        }
+      } catch(e) {
+        console.error('Lỗi khi fetch booked slots:', e);
+      }
+
+      // Hàm parse "HH:mm" hoặc "HH:mm:ss" → phút từ 0h
+      function toMin(timeStr) {
+        if (!timeStr) return -1;
+        const parts = timeStr.split(':').map(Number);
+        return parts[0] * 60 + parts[1];
+      }
+
+      // Hàm kiểm tra 1 slot có bị đặt không
+      function isBooked(slotTime) {
+        const slotMin = toMin(slotTime);
+        return bookedRanges.some(range => {
+          const start = toMin(range.startTime);
+          const end   = toMin(range.endTime);
+          return slotMin >= start && slotMin < end;
+        });
+      }
+
       tbody.innerHTML = '';
       courtRows.forEach(c => {
         const tr = document.createElement('tr');
@@ -117,11 +151,12 @@
         tdName.className = 'court-name';
         tdName.textContent = c;
         tr.appendChild(tdName);
+        
         times.forEach((t, idx) => {
           const td = document.createElement('td');
-          const rand = Math.random();
-          if (rand < 0.25) {
+          if (isBooked(t)) {
             td.className = 'slot booked';
+            td.title = 'Đã có người đặt';
           } else {
             td.className = 'slot empty';
             td.dataset.time = t;

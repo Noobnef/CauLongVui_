@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +60,17 @@ public class BookingService {
     public List<BookingDTO> getBookingsByUserId(Long userId) {
         return bookingRepository.findByUserIdOrderByBookingDateDesc(userId).stream()
                 .map(BookingDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, String>> getBookedSlots(Long courtId, LocalDate date) {
+        return bookingRepository.findByCourtIdAndBookingDate(courtId, date).stream()
+                .filter(b -> b.getStatus() != Booking.BookingStatus.CANCELLED)
+                .map(b -> Map.of(
+                        "startTime", b.getStartTime().toString(),
+                        "endTime",   b.getEndTime().toString()
+                ))
                 .collect(Collectors.toList());
     }
 

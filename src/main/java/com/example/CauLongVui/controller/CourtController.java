@@ -21,7 +21,7 @@ public class CourtController {
     // GET /api/courts — lấy tất cả sân
     @GetMapping
     public ResponseEntity<ApiResponse<List<CourtDTO>>> getAllCourts(
-            @RequestParam(required = false) Court.CourtStatus status) {
+            @RequestParam(name = "status", required = false) Court.CourtStatus status) {
         List<CourtDTO> courts = (status != null)
                 ? courtService.getCourtsByStatus(status)
                 : courtService.getAllCourts();
