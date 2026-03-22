@@ -22,10 +22,13 @@ public class BookingController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<BookingDTO>>> getAllBookings(
             @RequestParam(required = false) Long courtId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String phone) {
         List<BookingDTO> bookings;
         if (courtId != null) {
             bookings = bookingService.getBookingsByCourtId(courtId);
+        } else if (userId != null) {
+            bookings = bookingService.getBookingsByUserId(userId);
         } else if (phone != null && !phone.isBlank()) {
             bookings = bookingService.getBookingsByPhone(phone);
         } else {

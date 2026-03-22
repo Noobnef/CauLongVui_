@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tài khoản của tôi – Cầu Lông Vui</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
   <meta name="description" content="Thông tin tài khoản cá nhân và lịch sử đặt sân tại Cầu Lông Vui." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -456,10 +457,10 @@ const roleMap = {
 
 // ── Status helpers
 const statusLabel = {
-  CONFIRMED: '✅ Đã xác nhận',
-  PENDING:   '⏳ Chờ xác nhận',
-  CANCELLED: '❌ Đã hủy',
-  COMPLETED: '🏆 Hoàn thành',
+  CONFIRMED: 'Đã xác nhận',
+  PENDING:   'Chờ xác nhận',
+  CANCELLED: 'Đã hủy',
+  COMPLETED: 'Hoàn thành',
 };
 const statusPillClass = {
   CONFIRMED: 'pill-CONFIRMED',
@@ -502,8 +503,7 @@ function renderBookings(bookings) {
       <div class="empty-bk">
         <div class="ei">🏸</div>
         <h3>Chưa có lịch đặt sân nào</h3>
-        <p>Bạn chưa đặt sân nào. Hãy khám phá và đặt sân ngay!</p>
-        <a href="/courts.html">🏟️ Tìm sân ngay</a>
+        <a href="/courts.html" style="margin-top:10px;">Tìm sân ngay</a>
       </div>`;
     return;
   }
@@ -512,7 +512,7 @@ function renderBookings(bookings) {
     const img = courtImages[i % courtImages.length];
     const expired = isExpired(b.bookingDate, b.endTime);
     const timeBadgeClass = expired ? 'expired' : 'upcoming';
-    const timeBadgeText  = expired ? '⏰ Hết giờ' : '✅ Đặt sân thành công';
+    const timeBadgeText  = expired ? 'Hết giờ' : 'Đặt sân thành công';
 
     const borderClass = cardBorderClass[b.status] || '';
     const pillClass   = statusPillClass[b.status] || 'pill-COMPLETED';
@@ -566,7 +566,12 @@ async function loadBookings(phone) {
   ).join('');
 
   try {
-    const res  = await fetch('/api/bookings?phone=' + encodeURIComponent(phone));
+    const user = getCurrentUser();
+    const url = (user && user.id) 
+      ? `/api/bookings?userId=${user.id}` 
+      : `/api/bookings?phone=${encodeURIComponent(phone)}`;
+      
+    const res  = await fetch(url);
     const json = await res.json();
     const data = (json.success && json.data) ? json.data : [];
     renderBookings(data);

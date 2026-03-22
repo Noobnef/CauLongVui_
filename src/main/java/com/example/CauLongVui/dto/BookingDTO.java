@@ -15,6 +15,7 @@ import java.time.LocalTime;
 @Builder
 public class BookingDTO {
     private Long id;
+    private Long userId;
     private Long courtId;
     private String courtName;
     private String customerName;
@@ -28,6 +29,7 @@ public class BookingDTO {
     public static BookingDTO fromEntity(Booking booking) {
         return BookingDTO.builder()
                 .id(booking.getId())
+                .userId(booking.getUser() != null ? booking.getUser().getId() : null)
                 .courtId(booking.getCourt().getId())
                 .courtName(booking.getCourt().getName())
                 .customerName(booking.getCustomerName())

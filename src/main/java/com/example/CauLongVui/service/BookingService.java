@@ -7,6 +7,7 @@ import com.example.CauLongVui.exception.BadRequestException;
 import com.example.CauLongVui.exception.ResourceNotFoundException;
 import com.example.CauLongVui.repository.BookingRepository;
 import com.example.CauLongVui.repository.CourtRepository;
+import com.example.CauLongVui.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final CourtRepository courtRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<BookingDTO> getAllBookings() {
@@ -47,6 +49,13 @@ public class BookingService {
     @Transactional(readOnly = true)
     public List<BookingDTO> getBookingsByPhone(String phone) {
         return bookingRepository.findByCustomerPhoneOrderByBookingDateDesc(phone).stream()
+                .map(BookingDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingDTO> getBookingsByUserId(Long userId) {
+        return bookingRepository.findByUserIdOrderByBookingDateDesc(userId).stream()
                 .map(BookingDTO::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -77,6 +86,8 @@ public class BookingService {
 
         Booking booking = Booking.builder()
                 .court(court)
+                .user(bookingDTO.getUserId() != null ?
+                        userRepository.findById(bookingDTO.getUserId()).orElse(null) : null)
                 .customerName(bookingDTO.getCustomerName())
                 .customerPhone(bookingDTO.getCustomerPhone())
                 .bookingDate(bookingDTO.getBookingDate())

@@ -91,10 +91,10 @@ function courtStatusBadge(status) {
 
 function bookingStatusBadge(status) {
   const map = {
-    PENDING:   { cls: 'badge-warning', label: '⏳ Chờ xác nhận' },
-    CONFIRMED: { cls: 'badge-success', label: '✅ Đã xác nhận' },
-    CANCELLED: { cls: 'badge-danger',  label: '❌ Đã hủy' },
-    COMPLETED: { cls: 'badge-muted',   label: '🏆 Hoàn thành' },
+    PENDING:   { cls: 'badge-warning', label: 'Chờ xác nhận' },
+    CONFIRMED: { cls: 'badge-success', label: 'Đã xác nhận' },
+    CANCELLED: { cls: 'badge-danger',  label: 'Đã hủy' },
+    COMPLETED: { cls: 'badge-muted',   label: 'Hoàn thành' },
   };
   const s = map[status] || { cls: 'badge-muted', label: status };
   return `<span class="badge ${s.cls}">${s.label}</span>`;
@@ -172,11 +172,9 @@ function initHeaderEvents() {
     const cartCount = getCartCount();
 
     if (user.role === 'ADMIN') {
-      // ── ADMIN header: chỉ hiện các link quản lý, không có giỏ hàng hay đặt sân
+      // ── ADMIN header: chỉ hiện nút Quản trị hệ thống
       navActions.innerHTML = `
-        <a href="/admin/court-management.html"  class="btn-manage">🏸 Quản lý sân</a>
-        <a href="/admin/product-management.html" class="btn-manage">🛍️ Quản lý sản phẩm</a>
-        <a href="/admin/user-management.html"    class="btn-manage">👥 Quản lý người dùng</a>
+        <a href="/admin/admin.html" class="btn-manage">Quản lý</a>
         <div class="nav-user-menu" id="navUserMenu">
           <button class="nav-user-btn" onclick="toggleUserMenu()" id="navUserBtn">
             <div class="nav-user-avatar">${(user.fullName || 'A').charAt(0).toUpperCase()}</div>
@@ -188,11 +186,8 @@ function initHeaderEvents() {
               <div class="dropdown-name">${user.fullName}</div>
               <div class="dropdown-role">${roleLabel(user.role)}</div>
             </div>
-            <a href="/profile.html"                   class="dropdown-item">👤 Tài khoản của tôi</a>
-            <a href="/admin/admin.html"               class="dropdown-item">⚙️ Quản trị hệ thống</a>
-            <a href="/admin/court-management.html"    class="dropdown-item">📋 Quản lý sân</a>
-            <a href="/admin/product-management.html"  class="dropdown-item">🛍️ Quản lý sản phẩm</a>
-            <a href="/admin/user-management.html"     class="dropdown-item">👥 Quản lý người dùng</a>
+            <a href="/profile.html"      class="dropdown-item">👤 Tài khoản của tôi</a>
+            <a href="/admin/admin.html"  class="dropdown-item">⚙️ Quản trị hệ thống</a>
             <a href="#" class="dropdown-item dropdown-logout" id="logoutBtn">🚪 Đăng xuất</a>
           </div>
         </div>
