@@ -22,7 +22,7 @@ body {
 .status-dot { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
 .s-empty { background: white; }
 .s-booked { background: #e04f5f; }
-.s-selected { background: #b2ebd2; border: 2px solid #000; }
+.s-selected { background: #ef4444; border: 2px solid #000; }
 .schedule-container {
   overflow-x: auto; background: #e8faed; padding-bottom: 80px;
 }
@@ -36,7 +36,7 @@ body {
 .court-name { background: #cce5e4 !important; font-size: 12px; font-weight: bold; position: sticky; left: 0; z-index: 10; }
 .slot.empty { background: white; }
 .slot.booked { background: #e04f5f; cursor: not-allowed; }
-.slot.selected { background: #b2ebd2; }
+.slot.selected { background: #ef4444 !important; color: white; }
 .bottom-bar {
   position: fixed; bottom: 0; left: 0; width: 100%; background: var(--momo-dark);
   padding: 10px 15px; box-sizing: border-box; color: white; border-top-left-radius: 12px; border-top-right-radius: 12px;

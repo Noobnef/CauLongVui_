@@ -47,8 +47,8 @@
     }
 
     /* ── Court row highlight on hover ── */
-    .schedule-table tbody tr:hover td { background: #f0fdf4 !important; }
-    .schedule-table tbody tr:hover td.court-name { background: #f0fdf4 !important; }
+    .slot.empty:hover { background: #bbf7d0 !important; cursor: pointer; }
+    .slot.past { background: #f1f5f9 !important; cursor: not-allowed; opacity: 0.5; }
 
     /* ── Consecutive selection guide ── */
     .selection-hint {
@@ -57,6 +57,13 @@
       display: none;
     }
     .selection-hint.visible { display: block; }
+
+    /* ── Active court row highlight ── */
+    tr.court-active td { background: #f0fdf4 !important; }
+    tr.court-active td.court-name {
+      background: #dcfce7 !important;
+      border-left: 3px solid #2d8a4e;
+    }
   </style>
 </head>
 <body>
@@ -253,6 +260,9 @@
           if (isBooked(court.id, t)) {
             td.className = 'slot booked';
             td.title = 'Đã có người đặt';
+          } else if (isPastSlot(t)) {
+            td.className = 'slot past';
+            td.title = 'Khụng giờ đã qua';
           } else {
             td.className = 'slot empty';
             td.dataset.courtId  = court.id;
@@ -275,20 +285,41 @@
     let selIdxMin    = null;
     let selIdxMax    = null;
 
+    function isPastSlot(slotTimeStr) {
+      // Only block past slots on today's date
+      const selectedDate = dp.value;
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (selectedDate !== todayStr) return false;
+      const now = new Date();
+      const [h, m] = slotTimeStr.split(':').map(Number);
+      const slotDate = new Date();
+      slotDate.setHours(h, m, 0, 0);
+      return slotDate <= now;
+    }
+
     function handleSlotClick(cell) {
       const courtId = cell.dataset.courtId;
       const idx     = parseInt(cell.dataset.idx);
 
-      // If clicking on a different court, reset
+      // If clicking on a different court, reset & start fresh on new court
       if (selCourtId !== null && selCourtId !== courtId) {
         clearSelection();
+        // Highlight: remove old row highlight
+        document.querySelectorAll('tr.court-active').forEach(r => r.classList.remove('court-active'));
       }
 
       if (selCourtId === null) {
-        // First selection
+        // First click — check if past
+        if (isPastSlot(cell.dataset.time)) {
+          showScheduleToast('\u23F0 Kh\u00f4ng th\u1EC3 ch\u1EBDn kh\u1EE7ng gi\u1EDD \u0111\u00E3 qua!', 'warning');
+          return;
+        }
+        // First selection on this court
         selCourtId = courtId;
         selIdxMin  = idx;
         selIdxMax  = idx;
+        // Highlight active court row
+        highlightCourtRow(courtId);
       } else {
         // Extend or shrink range
         if (idx < selIdxMin) selIdxMin = idx;
@@ -313,6 +344,16 @@
       renderSelection();
       document.getElementById('selHint').classList.remove('visible');
       calcTotal();
+    }
+
+    function highlightCourtRow(courtId) {
+      // Remove previous highlight
+      document.querySelectorAll('tr.court-active').forEach(r => r.classList.remove('court-active'));
+      // Find the row: any cell with data-court-id matching
+      const anyCell = document.querySelector(`.slot[data-court-id="${courtId}"]`);
+      if (anyCell && anyCell.closest('tr')) {
+        anyCell.closest('tr').classList.add('court-active');
+      }
     }
 
     function renderSelection() {
@@ -377,6 +418,21 @@
 
     function formatCurrency(n) {
       return new Intl.NumberFormat('vi-VN').format(n) + ' đ';
+    }
+
+    function showScheduleToast(msg, type) {
+      // Remove old toast
+      const old = document.getElementById('schedToast');
+      if (old) old.remove();
+      const t = document.createElement('div');
+      t.id = 'schedToast';
+      t.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+        background:${type==='warning'?'#f39c12':'#2d8a4e'};color:#fff;
+        padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;
+        z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2500);
     }
 
     // ── Init ───────────────────────────────────────────────────

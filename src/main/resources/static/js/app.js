@@ -188,7 +188,7 @@ function initHeaderEvents() {
             </div>
             <a href="/profile.html"      class="dropdown-item">👤 Tài khoản của tôi</a>
             <a href="/admin/admin.html"  class="dropdown-item">⚙️ Quản trị hệ thống</a>
-            <a href="#" class="dropdown-item dropdown-logout" id="logoutBtn">🚪 Đăng xuất</a>
+            <a href="/auth/login.html" class="dropdown-item dropdown-logout" onclick="handleLogout();return false;">🚪 Đăng xuất</a>
           </div>
         </div>
       `;
@@ -216,7 +216,7 @@ function initHeaderEvents() {
             <a href="/my-orders.html"   class="dropdown-item">📋 Mặt hàng đã đặt</a>
             <a href="/my-racket-rentals.html" class="dropdown-item">🎾 Vợt đã thuê</a>
             ${user.role === 'STAFF' ? '<a href="/admin/court-management.html" class="dropdown-item">📋 Quản lý sân</a>' : ''}
-            <a href="#" class="dropdown-item dropdown-logout" id="logoutBtn">🚪 Đăng xuất</a>
+            <a href="/auth/login.html" class="dropdown-item dropdown-logout" onclick="handleLogout();return false;">🚪 Đăng xuất</a>
           </div>
         </div>
         ${user.role === 'STAFF' ? `<a href="/admin/court-management.html" class="btn-manage">⚙️ Quản lý</a>` : ''}
@@ -224,12 +224,7 @@ function initHeaderEvents() {
       `;
     }
 
-    document.getElementById('logoutBtn').addEventListener('click', (e) => {
-      e.preventDefault();
-      if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-        logout();
-      }
-    });
+    // logout handled via handleLogout() onclick
 
     // Đóng dropdown khi click ngoài
     document.addEventListener('click', (e) => {
@@ -282,6 +277,11 @@ function requireAuth(redirectUrl = null) {
 function logout() {
   localStorage.removeItem('currentUser');
   window.location.href = '/auth/login.html';
+}
+
+function handleLogout() {
+  localStorage.removeItem('currentUser');
+  window.location.replace('/auth/login.html');
 }
 
 // ── Cart helpers
