@@ -124,11 +124,11 @@
     }
 
     .bk-card-body {
-      flex: 1; padding: 16px 18px;
-      display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+      flex: 1; padding: 12px 16px;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
     }
-    .bk-court-name { font-size: 16px; font-weight: 800; color: var(--dark); margin-bottom: 2px; }
-    .bk-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+    .bk-court-name { font-size: 15px; font-weight: 800; color: var(--dark); margin-bottom: 0px; }
+    .bk-meta { display: flex; gap: 10px 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
     .bk-meta span { display: flex; align-items: center; gap: 4px; }
     .bk-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
     .bk-price { font-size: 18px; font-weight: 900; color: var(--green); }
@@ -136,16 +136,34 @@
       display: inline-flex; align-items: center; gap: 5px;
       font-size: 11.5px; font-weight: 700; padding: 4px 12px; border-radius: 20px;
     }
-    .pill-CONFIRMED { background: #dcfce7; color: #15803d; }
-    .pill-PENDING   { background: #fef9c3; color: #a16207; }
-    .pill-CANCELLED { background: #fee2e2; color: #b91c1c; }
-    .pill-COMPLETED { background: #f1f5f9; color: #64748b; }
+    .pill-CONFIRMED { background: #dcfce7; color: #15803d; border: 1px solid #bdf2d0; }
+    .pill-PENDING   { background: #fef9c3; color: #a16207; border: 1px solid #fef08a; }
+    .pill-CANCELLED { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .pill-COMPLETED { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 
-    /* Border accent по статусу */
-    .bk-card.bk-confirmed { border-left: 5px solid var(--green); }
-    .bk-card.bk-pending   { border-left: 5px solid #eab308; }
-    .bk-card.bk-cancelled { border-left: 5px solid var(--red); opacity: 0.75; }
-    .bk-card.bk-completed { border-left: 5px solid #94a3b8; }
+    /* Stripe on card */
+    .bk-card { position: relative; padding-left: 6px; }
+    .bk-status-stripe { 
+      position: absolute; left: 0; top: 0; bottom: 0; width: 6px; z-index: 10;
+      border-top-left-radius: 16px; border-bottom-left-radius: 16px;
+    }
+    .stripe-CONFIRMED { background: var(--green); }
+    .stripe-PENDING   { background: #eab308; }
+    .stripe-CANCELLED { background: var(--red); }
+    .stripe-COMPLETED { background: #94a3b8; }
+
+    /* Modal Details (from my-bookings.html) */
+    .detail-row { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px dashed var(--border); padding-bottom: 8px; }
+    .detail-row label { font-weight: 600; color: var(--muted); font-size: 13px; }
+    .detail-row span { font-weight: 700; color: var(--dark); text-align: right; font-size: 14px; }
+    .modal-footer-btns { padding: 16px 24px; background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 12px; flex-wrap: wrap; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; text-align: center; text-decoration: none; cursor: pointer; border: none; font-family: inherit; transition: all 0.2s; min-width: 120px; }
+    .btn-order-items { background: var(--green); color: #fff; }
+    .btn-order-items:hover { background: var(--green-light); transform: translateY(-1px); }
+    .btn-pass-san { background: #fef08a; color: #a16207; border: 1.5px solid #fde047; }
+    .btn-pass-san:hover { background: #fde047; }
+    .btn-cancel-booking { background: #fee2e2; color: #dc2626; border: 1.5px solid #fca5a5; }
+    .btn-cancel-booking:hover { background: #dc2626; color: #fff; }
 
     /* Skeleton */
     .skeleton {
@@ -387,6 +405,22 @@
 
 <div id="footer-placeholder"></div>
 
+<!-- ── Modal chi tiết đặt sân ── -->
+<div class="modal-overlay" id="bookingDetailModal" onclick="handleBookingOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="bmTitle">Chi tiết đặt sân</h3>
+      <button class="modal-close" onclick="closeBookingModal()">✕</button>
+    </div>
+    <div class="modal-body" id="bmBody" style="padding-bottom: 0;">
+      <!-- Content here -->
+    </div>
+    <div class="modal-footer-btns" id="bmFooter">
+      <!-- Buttons here -->
+    </div>
+  </div>
+</div>
+
 <!-- ── Modal chỉnh sửa profile ── -->
 <div class="modal-overlay" id="editModal" onclick="handleOverlayClick(event)">
   <div class="modal-box">
@@ -436,6 +470,9 @@
 
 <script src="/js/app.js"></script>
 <script>
+let userBookings = []; // To store fetched bookings for modal lookups
+let currentBookingId = null;
+
 // ── Court image pool (shared with index.html)
 const courtImages = [
   'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
@@ -509,8 +546,14 @@ function renderBookings(bookings) {
   const htmlList = displayBookings.map((b, i) => {
     const img = courtImages[i % courtImages.length];
     const expired = isExpired(b.bookingDate, b.endTime);
-    const timeBadgeClass = expired ? 'expired' : 'upcoming';
-    const timeBadgeText  = expired ? 'Hết giờ' : 'Đặt sân thành công';
+    
+    let timeBadgeClass = expired ? 'expired' : 'upcoming';
+    let timeBadgeText  = expired ? 'Hết giờ' : 'Đặt sân thành công';
+    
+    if (b.status === 'CANCELLED') {
+      timeBadgeClass = 'expired';
+      timeBadgeText  = 'Đã hủy';
+    }
 
     const borderClass = cardBorderClass[b.status] || '';
     const pillClass   = statusPillClass[b.status] || 'pill-COMPLETED';
@@ -532,7 +575,8 @@ function renderBookings(bookings) {
       : '—';
 
     return `
-      <div class="bk-card ${borderClass}">
+      <div class="bk-card" onclick="openBookingDetail(${b.id})" style="cursor:pointer;">
+        <div class="bk-status-stripe stripe-${b.status || 'COMPLETED'}"></div>
         <div class="bk-card-img">
           <img src="${img}" alt="${escHtml(b.courtName)}" loading="lazy" />
           <div class="bk-time-badge ${timeBadgeClass}">${timeBadgeText}</div>
@@ -543,7 +587,7 @@ function renderBookings(bookings) {
             <div class="bk-meta">
               <span>📅 ${displayDate}</span>
               <span>🕐 ${startFmt} – ${endFmt}</span>
-              <span>👤 ${escHtml(b.customerName || '—')}</span>
+              <span>👤 ${escHtml((b.customerName || '—').split(' ').slice(-2).join(' '))}</span>
               <span>📞 ${escHtml(b.customerPhone || '—')}</span>
             </div>
           </div>
@@ -580,6 +624,7 @@ async function loadBookings(phone) {
     const res  = await fetch(url);
     const json = await res.json();
     const data = (json.success && json.data) ? json.data : [];
+    userBookings = data; // Store globally
     renderBookings(data);
   } catch (err) {
     container.innerHTML = `
@@ -747,6 +792,97 @@ function refreshProfileUI(user) {
 
 function confirmLogout() {
   if (confirm('Bạn có chắc muốn đăng xuất không?')) logout();
+}
+
+// ── Booking Detail Modal functions ───────────────────────────────
+function openBookingDetail(id) {
+  const b = userBookings.find(x => x.id === id);
+  if (!b) return;
+  currentBookingId = id;
+  
+  document.getElementById('bmTitle').innerHTML = `Chi tiết sân ${escHtml(b.courtName)}`;
+  const statusLabel = { CONFIRMED: 'Đã xác nhận', PENDING: 'Chờ xác nhận', CANCELLED: 'Đã hủy', COMPLETED: 'Hoàn thành' };
+
+  let html = `
+    <div class="detail-row"><label>Mã Đơn</label><span>#${b.id}</span></div>
+    <div class="detail-row"><label>Trạng Thái</label><span class="pill-${b.status}" style="padding:2px 10px; border-radius:12px; font-size:12px;">${statusLabel[b.status] || b.status}</span></div>
+    <div class="detail-row"><label>Ngày Đặt</label><span>${formatDate(b.bookingDate)}</span></div>
+    <div class="detail-row"><label>Khung Giờ</label><span>${b.startTime} - ${b.endTime}</span></div>
+    <div class="detail-row"><label>Người Đặt</label><span>${escHtml(b.customerName)}</span></div>
+    <div class="detail-row"><label>Số điện thoại</label><span>${escHtml(b.customerPhone)}</span></div>
+    <div class="detail-row"><label>Giá Gốc</label><span style="font-size:16px;color:var(--green);">${b.totalPrice ? b.totalPrice.toLocaleString('vi-VN') + ' đ' : '—'}</span></div>
+  `;
+
+  if (b.isPass) {
+      html += `<div style="margin-top:16px;padding:12px;background:#fefce8;border-radius:8px;border:1px dashed #fde047;text-align:center;">
+        <p style="color:#a16207;font-weight:700;font-size:13px;">Sân này đang được Pass (Bán lại)</p>
+        <p style="font-size:18px;color:var(--red);font-weight:900;">${formatCurrency(b.passPrice)}</p>
+      </div>`;
+  }
+
+  document.getElementById('bmBody').innerHTML = html;
+
+  // --- Check Expiration and status ---
+  const expired = isExpired(b.bookingDate, b.endTime);
+  
+  let footerHtml = '';
+  if (expired) {
+      footerHtml += `<div style="width:100%; text-align:center; color:var(--muted); font-weight:700; font-size:13px; padding:12px; background:#f1f5f9; border-radius:10px;">Sân đã quá thời hạn sử dụng</div>`;
+  } else if (b.status === 'CANCELLED') {
+      footerHtml += `<div style="width:100%; text-align:center; color:var(--red); font-weight:700; font-size:13px; padding:12px; background:#fee2e2; border-radius:10px;">Lịch đặt đã bị hủy</div>`;
+  } else {
+      let buttonsHtml = `<a href="/my-bookings.html" class="modal-btn btn-order-items">Quản lý đặt sân & Order đồ</a>`;
+      
+      if (b.status === 'CONFIRMED' || b.status === 'PENDING') {
+          // Check if cancellable: at least 1 hour before start
+          let canCancel = false;
+          if (b.bookingDate && b.startTime) {
+              const startDateTime = new Date(`${b.bookingDate}T${b.startTime}`);
+              const diffMs = startDateTime - new Date();
+              canCancel = diffMs > 60 * 60 * 1000; // > 1 hour
+          }
+          if (canCancel) {
+              buttonsHtml += `<button class="modal-btn btn-cancel-booking" onclick="cancelBookingFromProfile()">🚫 Hủy Đặt Sân</button>`;
+          } else {
+              footerHtml += `<div style="width:100%; font-size:13px; color:#f59e0b; text-align:center; padding:8px; margin-bottom:4px; font-weight:700;">⚠️ Không thể hủy trong vòng 1 giờ trước giờ đánh</div>`;
+          }
+      }
+      footerHtml += buttonsHtml;
+  }
+  document.getElementById('bmFooter').innerHTML = footerHtml;
+
+  document.getElementById('bookingDetailModal').classList.add('open');
+}
+
+function closeBookingModal() {
+  document.getElementById('bookingDetailModal').classList.remove('open');
+}
+
+function handleBookingOverlayClick(e) {
+  if (e.target === document.getElementById('bookingDetailModal')) closeBookingModal();
+}
+
+async function cancelBookingFromProfile() {
+  if (!currentBookingId) return;
+  const b = userBookings.find(x => x.id === currentBookingId);
+  if (!b) return;
+
+  const confirmed = confirm(`Bạn có chắc muốn hủy đặt sân ${b.courtName}?\nHành động này không thể hoàn tác.`);
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/bookings/${currentBookingId}/status?status=CANCELLED`, { method: 'PATCH' });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Hủy thất bại');
+    
+    showToast('✅ Đã hủy đặt sân thành công!', 'success');
+    closeBookingModal();
+    // Refresh bookings
+    const user = getCurrentUser();
+    if (user && user.phone) loadBookings(user.phone);
+  } catch (err) {
+    showToast('❌ Lỗi: ' + err.message, 'error');
+  }
 }
 </script>
 </body>

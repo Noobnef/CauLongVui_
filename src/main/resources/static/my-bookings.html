@@ -101,7 +101,7 @@
     .modal-row { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px dashed var(--border); padding-bottom: 8px; }
     .modal-row label { font-weight: 600; color: var(--muted); }
     .modal-row span { font-weight: 700; color: var(--dark); text-align: right; }
-    .modal-footer { padding: 16px 24px; background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 12px; }
+    .modal-footer { padding: 16px 24px; background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 12px; flex-wrap: wrap; }
     .modal-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; text-align: center; text-decoration: none; cursor: pointer; border: none; font-family: var(--font-main); transition: all 0.2s; }
     .btn-order-items { background: var(--green); color: #fff; }
     .btn-order-items:hover { background: var(--green-light); }
@@ -417,7 +417,6 @@
     } else if (b.status === 'CANCELLED') {
         footerHtml += `<div style="width:100%; text-align:center; color:#dc2626; font-weight:700; font-size:14px; padding:8px; background:#fee2e2; border-radius:8px;">Booking này đã bị hủy</div>`;
     } else {
-        footerHtml += `<button onclick="openOrderMenu()" class="modal-btn btn-order-items">Order Đồ Uống & Vợt</button>`;
         if (b.status === 'CONFIRMED' || b.status === 'PENDING') {
             // Check if cancellable: at least 1 hour before start
             let canCancel = false;
@@ -426,10 +425,12 @@
                 const diffMs  = startDT - new Date();
                 canCancel = diffMs > 60 * 60 * 1000; // > 1 hour
             }
-            if (canCancel) {
-                footerHtml += `<button class="modal-btn btn-cancel-booking" onclick="cancelBooking()">🚫 Hủy Đặt Sân</button>`;
+            if (!canCancel) {
+                footerHtml = `<div style="width:100%; font-size:13px; color:#f59e0b; text-align:center; padding:8px; margin-bottom:4px; font-weight:700;">⚠️ Không thể hủy trong vòng 1 giờ trước giờ đánh</div>` + footerHtml;
+                footerHtml += `<button onclick="openOrderMenu()" class="modal-btn btn-order-items">Order Đồ Uống & Vợt</button>`;
             } else {
-                footerHtml += `<div style="font-size:12px;color:#f59e0b;text-align:center;padding:6px;">⚠️ Không thể hủy trong vòng 1 giờ trước giờ đánh</div>`;
+                footerHtml += `<button onclick="openOrderMenu()" class="modal-btn btn-order-items">Order Đồ Uống & Vợt</button>`;
+                footerHtml += `<button class="modal-btn btn-cancel-booking" onclick="cancelBooking()">🚫 Hủy Đặt Sân</button>`;
             }
             if (!b.isPass) {
                 footerHtml += `<button class="modal-btn btn-pass-san" onclick="confirmResell()">Bán lại sân (Giảm 20%)</button>`;

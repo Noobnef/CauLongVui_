@@ -2,6 +2,7 @@ package com.example.CauLongVui.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Nationalized;
 
 @Entity
 @Table(name = "courts")
@@ -15,9 +16,11 @@ public class Court {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Nationalized
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Nationalized
     @Column(length = 500)
     private String description;
 

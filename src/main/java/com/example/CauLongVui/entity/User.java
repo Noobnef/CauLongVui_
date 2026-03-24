@@ -2,6 +2,7 @@ package com.example.CauLongVui.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Nationalized;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,6 +17,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Nationalized
     @Column(nullable = false, length = 100)
     private String fullName;
 

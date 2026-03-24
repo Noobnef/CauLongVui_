@@ -213,12 +213,15 @@
       const res  = await fetch('/api/courts');
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
-      allCourts = json.data.filter(c => c.status !== 'MAINTENANCE');
+      
+      let data = json.data.filter(c => c.status !== 'MAINTENANCE');
       if (filterCourtId) {
-        // highlight / scroll to — still show all courts
+        data = data.filter(c => String(c.id) === String(filterCourtId));
       }
+      allCourts = data;
+      
       const label = document.getElementById('courtCountLabel');
-      label.textContent = `${allCourts.length} sân khả dụng`;
+      label.textContent = filterCourtId ? `Đang đặt: ${allCourts[0]?.name || 'Sân'}` : `${allCourts.length} sân khả dụng`;
     }
 
     // ── Load booked slots for ALL courts on a date ─────────────
