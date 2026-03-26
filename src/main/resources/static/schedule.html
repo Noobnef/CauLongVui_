@@ -28,6 +28,11 @@
     .day-btn.selected .day-name,
     .day-btn.selected .day-num  { color: #fff; }
 
+    /* ── Slot State Colors ── */
+    .slot.booked { background: #e04f5f !important; cursor: not-allowed; } /* Red */
+    .slot.held.by-me { background: #bbf7d0 !important; cursor: pointer; }
+    .slot.selected { background: #2d8a4e !important; color: white; } /* Green - Win over held.by-me */
+
     /* ── Custom date picker ── */
     .date-picker-bar {
       background: #fff; padding: 8px 12px;
@@ -64,6 +69,13 @@
       background: #dcfce7 !important;
       border-left: 3px solid #2d8a4e;
     }
+
+    /* ── RSocket Held State ── */
+    .slot.held {
+      background: #fef3c7 !important; /* light yellow */
+      cursor: not-allowed;
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -92,7 +104,8 @@
   <div class="status-bar">
     <div><span class="status-dot s-empty"></span> Trống</div>
     <div><span class="status-dot s-booked"></span> Đã đặt</div>
-    <div><span class="status-dot s-selected"></span> Đang chọn</div>
+    <div><span class="status-dot s-held" style="background:#fef3c7;"></span> Đang giữ</div>
+    <div><span class="status-dot s-selected" style="background:#2d8a4e;"></span> Đang chọn</div>
   </div>
 
   <div class="schedule-container">
@@ -130,7 +143,11 @@
 
     let allCourts = [];   // loaded from API
     let bookedMap  = {};  // { courtId: [{startTime, endTime}] }
+    let heldSlots     = []; // { courtId, startMin, endMin, isByMe, holdId }
     let selectedCell = null; // { courtId, idxArr }
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    const myUserId    = currentUser ? currentUser.id : 999; // Mock ID if not logged in
 
     // ── Date picker & 7-day bar ────────────────────────────────
     const dp = document.getElementById('datePicker');
@@ -139,11 +156,17 @@
     dp.min   = todayLocalStr;
     dp.value = todayLocalStr;
     updateDateLabel();
-    buildWeekBar();
+    // Initial load
+    window.addEventListener('load', () => {
+      renderWeekBar();
+      loadCourtsAndGrid();
+      initAvailabilityStream();
+    });
 
     dp.addEventListener('change', () => {
       updateDateLabel();
       syncWeekBarSelection();
+      clearSelection();
       buildGrid();
     });
 
@@ -152,7 +175,7 @@
       document.getElementById('dateLabel').textContent = d + '/' + m + '/' + y;
     }
 
-    function buildWeekBar() {
+    function renderWeekBar() {
       const bar = document.getElementById('weekBar');
       bar.innerHTML = '';
       const DAYS = ['CN','T2','T3','T4','T5','T6','T7'];
@@ -168,6 +191,7 @@
           dp.value = iso;
           updateDateLabel();
           syncWeekBarSelection();
+          clearSelection();
           buildGrid();
         };
         bar.appendChild(btn);
@@ -208,18 +232,36 @@
       return ranges.some(r => slotMin >= toMin(r.startTime) && slotMin < toMin(r.endTime));
     }
 
+    function isHeld(courtId, slotTime) {
+      const slotMin = toMin(slotTime);
+      return heldSlots.some(h =>
+        String(h.courtId) === String(courtId) &&
+        slotMin >= h.startMin && slotMin < h.endMin &&
+        !h.isByMe
+      );
+    }
+
+    function getMyHold(courtId, slotTime) {
+      const slotMin = toMin(slotTime);
+      return heldSlots.find(h =>
+        String(h.courtId) === String(courtId) &&
+        slotMin >= h.startMin && slotMin < h.endMin &&
+        h.isByMe
+      );
+    }
+
     // ── Load all courts ────────────────────────────────────────
     async function loadCourts() {
       const res  = await fetch('/api/courts');
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
-      
+
       let data = json.data.filter(c => c.status !== 'MAINTENANCE');
       if (filterCourtId) {
         data = data.filter(c => String(c.id) === String(filterCourtId));
       }
       allCourts = data;
-      
+
       const label = document.getElementById('courtCountLabel');
       label.textContent = filterCourtId ? `Đang đặt: ${allCourts[0]?.name || 'Sân'}` : `${allCourts.length} sân khả dụng`;
     }
@@ -242,7 +284,6 @@
     async function buildGrid() {
       const tbody = document.getElementById('grid-body');
       tbody.innerHTML = `<tr><td colspan="100" style="text-align:center;padding:20px;">Đang tải dữ liệu...</td></tr>`;
-      clearSelection();
 
       await loadAllBookedSlots(dp.value);
 
@@ -261,14 +302,22 @@
 
         times.forEach((t, idx) => {
           const td = document.createElement('td');
+          const myHold = getMyHold(court.id, t);
+
           if (isBooked(court.id, t)) {
             td.className = 'slot booked';
             td.title = 'Đã có người đặt';
+          } else if (isHeld(court.id, t)) {
+            td.className = 'slot held';
+            td.title = 'Đang có người giữ chỗ';
           } else if (isPastSlot(t)) {
             td.className = 'slot past';
-            td.title = 'Khụng giờ đã qua';
+            td.title = 'Khung giờ đã qua';
           } else {
             td.className = 'slot empty';
+            if (myHold) {
+              td.classList.add('selected', 'by-me');
+            }
             td.dataset.courtId  = court.id;
             td.dataset.courtName = court.name;
             td.dataset.price    = court.pricePerHour;
@@ -282,6 +331,11 @@
       });
 
       calcTotal();
+    }
+
+    async function loadCourtsAndGrid() {
+      await loadCourts();
+      await buildGrid();
     }
 
     // ── Consecutive slot selection logic ───────────────────────
@@ -300,9 +354,10 @@
       return slotDate <= now;
     }
 
-    function handleSlotClick(cell) {
+    async function handleSlotClick(cell) {
       const courtId = cell.dataset.courtId;
       const idx     = parseInt(cell.dataset.idx);
+      const dateStr = dp.value;
 
       if (cell.classList.contains('booked')) {
         showScheduleToast('Giờ này đã có người đặt!', 'warning');
@@ -313,7 +368,26 @@
         return;
       }
 
-      // Nếu click sang sân khác, clear và chọn lại từ đầu (đây là sân mới)
+      // If already selected, and it's my hold, release it
+      if (cell.classList.contains('selected') && cell.classList.contains('by-me')) {
+        const holdId = localStorage.getItem('bk_holdId');
+        if (holdId) {
+          await requestRelease(holdId);
+          localStorage.removeItem('bk_holdId');
+        }
+        cell.classList.remove('selected', 'held', 'by-me');
+        // Remove from selectedIndices
+        selectedIndices = selectedIndices.filter(i => i !== idx);
+        if (selectedIndices.length === 0) {
+          selCourtId = null;
+          document.querySelectorAll('tr.court-active').forEach(r => r.classList.remove('court-active'));
+        }
+        renderSelection();
+        calcTotal();
+        return;
+      }
+
+      // If click sang sân khác, clear và chọn lại từ đầu (đây là sân mới)
       if (selCourtId !== null && selCourtId !== courtId) {
         clearSelection();
         document.querySelectorAll('tr.court-active').forEach(r => r.classList.remove('court-active'));
@@ -356,6 +430,36 @@
 
       renderSelection();
       calcTotal();
+
+      // Request hold for the new selection
+      if (selectedIndices.length > 0) {
+        const minIdx = Math.min(...selectedIndices);
+        const maxIdx = Math.max(...selectedIndices);
+        const startTime = idxToTime(minIdx);
+        const endTime = idxToTime(maxIdx + 1);
+
+        // Release previous hold if exists to avoid ghost holds on server
+        const oldHoldId = localStorage.getItem('bk_holdId');
+        if (oldHoldId) {
+          requestRelease(oldHoldId);
+        }
+
+        const result = await requestHold(parseInt(selCourtId), dateStr, startTime, endTime);
+        if (result.success) {
+          localStorage.setItem('bk_holdId', result.holdId);
+          showScheduleToast('Đã giữ sân thành công trong 5 phút!', 'info');
+        } else {
+          showScheduleToast(result.message, 'warning');
+          clearSelection(); // Clear selection if hold fails
+        }
+      } else {
+        // If selection is empty, release any existing hold
+        const holdId = localStorage.getItem('bk_holdId');
+        if (holdId) {
+          await requestRelease(holdId);
+          localStorage.removeItem('bk_holdId');
+        }
+      }
     }
 
     function highlightCourtRow(courtId) {
@@ -370,12 +474,17 @@
       document.querySelectorAll('.slot.selected').forEach(c => c.classList.remove('selected'));
       if (selCourtId === null || selectedIndices.length === 0) return;
       selectedIndices.forEach(idx => {
-         const cell = document.querySelector(`.slot[data-court-id="${selCourtId}"][data-idx="${idx}"]`);
-         if (cell) cell.classList.add('selected');
+        const cell = document.querySelector(`.slot[data-court-id="${selCourtId}"][data-idx="${idx}"]`);
+        if (cell) cell.classList.add('selected');
       });
     }
 
-    function clearSelection() {
+    async function clearSelection() {
+      const holdId = localStorage.getItem('bk_holdId');
+      if (holdId) {
+        await requestRelease(holdId);
+        localStorage.removeItem('bk_holdId');
+      }
       selCourtId = null;
       selectedIndices = [];
       document.querySelectorAll('.slot.selected').forEach(c => c.classList.remove('selected'));
@@ -448,8 +557,86 @@
       setTimeout(() => t.remove(), 2500);
     }
 
-    // ── Init ───────────────────────────────────────────────────
-    loadCourts().then(() => buildGrid());
+    // ── Real-time Court Holding (Native SSE & REST) ────────────────
+    let eventSource = null;
+
+    function initAvailabilityStream() {
+      if (eventSource) eventSource.close();
+
+      console.log('Connecting to availability stream via SSE...');
+      eventSource = new EventSource('/api/bookings/availability/stream');
+
+      eventSource.onmessage = (event) => {
+        if (!event.data) return; // keep-alive comments
+        try {
+          const state = JSON.parse(event.data);
+          updateSlotInUI(state);
+        } catch (e) {
+          // ignore parsing error for keep-alive comments
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.warn('SSE connection lost. Reconnecting in 5s...', err);
+        eventSource.close();
+        setTimeout(initAvailabilityStream, 5000);
+      };
+    }
+
+    async function requestHold(courtId, date, startTime, endTime) {
+      const response = await fetch('/api/bookings/hold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courtId,
+          bookingDate: date,
+          startTime,
+          endTime,
+          userId: myUserId
+        })
+      });
+      return await response.json();
+    }
+
+    async function requestRelease(holdId) {
+      await fetch(`/api/bookings/release/${holdId}`, { method: 'POST' });
+    }
+
+    function updateSlotInUI(update) {
+      // update: { courtId, bookingDate, startTime, endTime, status, heldByUserId, holdId }
+      console.log('Slot update received:', update);
+
+      if (update.bookingDate !== dp.value) return;
+
+      const start = toMin(update.startTime);
+      const end   = toMin(update.endTime);
+
+      if (update.status === 'HELD') {
+        const isByMe = String(update.heldByUserId) === String(myUserId);
+        // Add to heldSlots if not already there
+        if (!heldSlots.find(h => h.holdId === update.holdId)) {
+          heldSlots.push({
+            courtId: update.courtId,
+            startMin: start,
+            endMin: end,
+            isByMe: isByMe,
+            holdId: update.holdId
+          });
+        }
+      } else if (update.status === 'AVAILABLE' || update.status === 'BOOKED') {
+        // Remove from heldSlots
+        heldSlots = heldSlots.filter(h =>
+          !(String(h.courtId) === String(update.courtId) && h.startMin === start)
+        );
+        if (update.status === 'BOOKED') {
+           // Reload booked map to be sure
+           loadAllBookedSlots(dp.value).then(() => buildGrid());
+           return;
+        }
+      }
+
+      buildGrid(); // Re-render grid to reflect holds
+    }
   </script>
 </body>
 </html>

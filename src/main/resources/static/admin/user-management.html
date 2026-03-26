@@ -435,10 +435,10 @@ function renderTable(users) {
       </td>
       <td>${escHtml(u.phone || '—')}</td>
       <td>${roleBadge}</td>
-      <td><span class="badge badge-active">✅ Hoạt động</span></td>
+      <td><span class="badge badge-active">Hoạt động</span></td>
       <td>
         <div class="action-btns">
-          ${!isSelf ? `<button class="btn-role" onclick="openRoleModal(${u.id})">🔐 Đổi quyền</button>` : `<span style="font-size:12px;color:var(--muted);">—</span>`}
+          ${!isSelf ? `<button class="btn-role" onclick="openRoleModal(${u.id})">Đổi quyền</button>` : `<span style="font-size:12px;color:var(--muted);">—</span>`}
         </div>
       </td>
     </tr>`;

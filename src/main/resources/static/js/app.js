@@ -201,16 +201,21 @@ function initHeaderEvents() {
         </a>
         <div class="nav-user-menu" id="navUserMenu">
           <button class="nav-user-btn" onclick="toggleUserMenu()" id="navUserBtn">
+            ${user.membershipTier && user.membershipTier !== 'NORMAL' ? `<div class="user-tier-tag ${user.membershipTier}">${user.membershipTier}</div>` : ''}
             <div class="nav-user-avatar">${(user.fullName || 'U').charAt(0).toUpperCase()}</div>
             <span class="nav-user-name">${(user.fullName || user.email).split(' ').slice(-1)[0]}</span>
             <span style="font-size:11px;color:var(--muted)">▾</span>
           </button>
-          <div class="nav-user-dropdown" id="navUserDropdown" style="display:none;">
+            <div class="nav-user-dropdown" id="navUserDropdown" style="display:none;">
             <div class="dropdown-header">
               <div class="dropdown-name">${user.fullName}</div>
-              <div class="dropdown-role">${roleLabel(user.role)}</div>
+              <div class="dropdown-role">
+                ${roleLabel(user.role)}
+                ${user.membershipTier && user.membershipTier !== 'NORMAL' ? `<span class="badge-vip">⭐ ${user.membershipTier}</span>` : ''}
+              </div>
             </div>
             <a href="/profile.html"     class="dropdown-item">👤 Tài khoản của tôi</a>
+            <a href="/membership.html"  class="dropdown-item" style="color:var(--green);font-weight:700;">💎 Nâng cấp tài khoản</a>
             <a href="/my-bookings.html" class="dropdown-item">🏸 Sân đã đặt</a>
             <a href="/cart.html"        class="dropdown-item">🛒 Giỏ hàng của tôi</a>
             <a href="/my-orders.html"   class="dropdown-item">📋 Mặt hàng đã đặt</a>

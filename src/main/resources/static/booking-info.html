@@ -159,7 +159,10 @@
 
       try {
         // 1. Tạo booking trước
-        const bookingRes = await fetch('/api/bookings', {
+        const holdId = localStorage.getItem('bk_holdId');
+        const url = holdId ? `/api/bookings?holdId=${holdId}` : '/api/bookings';
+
+        const bookingRes = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

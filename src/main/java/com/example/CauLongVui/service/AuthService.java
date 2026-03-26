@@ -92,6 +92,8 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .membershipTier(user.getMembershipTier())
+                .membershipExpiry(user.getMembershipExpiry())
                 .message(message)
                 .build();
     }

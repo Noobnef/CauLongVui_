@@ -43,6 +43,14 @@ public class User {
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private MembershipTier membershipTier = MembershipTier.NORMAL;
+
+    @Column
+    private LocalDateTime membershipExpiry;
+
     public enum Role {
         ADMIN, STAFF, CUSTOMER
     }

@@ -16,5 +16,7 @@ public class AuthResponse {
     private String email;
     private String phone;
     private User.Role role;
+    private com.example.CauLongVui.entity.MembershipTier membershipTier;
+    private java.time.LocalDateTime membershipExpiry;
     private String message;
 }

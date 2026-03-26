@@ -67,8 +67,27 @@ public class UserController {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .membershipTier(user.getMembershipTier())
+                .membershipExpiry(user.getMembershipExpiry())
                 .build();
         return ResponseEntity.ok(ApiResponse.success(
                 active ? "Đã kích hoạt tài khoản" : "Đã vô hiệu hóa tài khoản", resp));
+    }
+
+    // GET /api/users/{id} — Lấy thông tin chi tiết người dùng
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<AuthResponse>> getUserById(@PathVariable Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+        AuthResponse resp = AuthResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .role(user.getRole())
+                .membershipTier(user.getMembershipTier())
+                .membershipExpiry(user.getMembershipExpiry())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(resp));
     }
 }

@@ -124,25 +124,39 @@
   }
 
   function renderSuccess() {
+    const isMembership = orderId.startsWith('MB-');
+    const title = isMembership ? 'Nâng cấp tài khoản thành công!' : 'Thanh toán thành công!';
+    const sub = isMembership ? 'Gói hội viên của bạn đã được kích hoạt' : 'Đặt sân của bạn đã được xác nhận';
+    const icon = isMembership ? '💎' : '✅';
+
     document.getElementById('resultCard').innerHTML = `
       <div class="result-header success">
-        <div class="result-icon">✅</div>
-        <div class="result-title">Thanh toán thành công!</div>
-        <div class="result-sub">Đặt sân của bạn đã được xác nhận</div>
+        <div class="result-icon">${icon}</div>
+        <div class="result-title">${title}</div>
+        <div class="result-sub">${sub}</div>
       </div>
       <div class="result-body">
-        <div class="momo-badge">💜 Thanh toán qua Ví MoMo</div>
+        <div class="momo-badge">✨ Thanh toán hoàn tất</div>
 
         <div class="info-row"><span class="info-label">Mã đơn hàng</span><span class="info-value">${orderId}</span></div>
-        ${transId ? `<div class="info-row"><span class="info-label">Mã GD MoMo</span><span class="info-value green">${transId}</span></div>` : ''}
-        <div class="info-row"><span class="info-label">Sân đặt</span><span class="info-value">${courtName}</span></div>
-        <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value">${custName} – ${custPhone}</span></div>
+        ${transId ? `<div class="info-row"><span class="info-label">Mã giao dịch</span><span class="info-value green">${transId}</span></div>` : ''}
+        ${!isMembership ? `
+          <div class="info-row"><span class="info-label">Sân đặt</span><span class="info-value">${courtName}</span></div>
+          <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value">${custName} – ${custPhone}</span></div>
+        ` : ''}
         <div class="info-row"><span class="info-label">Số tiền</span><span class="info-value pink">${fmt(amount)}</span></div>
-        <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value green">✅ Thành công</span></div>
+        <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value green">Thành công</span></div>
 
-        <a href="/courts.html" class="btn-home">🏸 Đặt sân khác</a>
-        <a href="/my-bookings.html" class="btn-retry" style="color: var(--green, #2d8a4e); border-color: var(--green, #2d8a4e);">📋 Xem lịch đặt của tôi</a>
+        <a href="/" class="btn-home">🏠 Về trang chủ</a>
+        ${!isMembership ? `
+          <a href="/my-bookings.html" class="btn-retry" style="color: var(--green); border-color: var(--green);">Xem lịch đặt của tôi</a>
+        ` : ''}
       </div>`;
+
+      // Nếu là mua gói hội viên, cập nhật lại thông tin user trong localStorage
+      if (isMembership) {
+          refreshUserSession();
+      }
 
       // ── AUTOCREATE MATCHMAKING ── //
       const gkPendingStr = localStorage.getItem('gk_pending');
@@ -184,6 +198,7 @@
   }
 
   function renderFailed() {
+    const isMembership = orderId.startsWith('MB-');
     document.getElementById('resultCard').innerHTML = `
       <div class="result-header failed">
         <div class="result-icon">❌</div>
@@ -191,16 +206,31 @@
         <div class="result-sub">${message || 'Giao dịch không thành công'}</div>
       </div>
       <div class="result-body">
-        <div class="momo-badge">💜 Thanh toán qua Ví MoMo</div>
+        <div class="momo-badge">Thanh toán qua Ví MoMo</div>
 
         <div class="info-row"><span class="info-label">Mã đơn hàng</span><span class="info-value">${orderId || '—'}</span></div>
-        <div class="info-row"><span class="info-label">Sân đặt</span><span class="info-value">${courtName}</span></div>
+        ${!isMembership ? `<div class="info-row"><span class="info-label">Sân đặt</span><span class="info-value">${courtName}</span></div>` : ''}
         <div class="info-row"><span class="info-label">Số tiền</span><span class="info-value pink">${fmt(amount)}</span></div>
-        <div class="info-row"><span class="info-label">Trạng thái</span><span style="color:#c0392b;font-weight:700;">❌ Thất bại</span></div>
+        <div class="info-row"><span class="info-label">Trạng thái</span><span style="color:#c0392b;font-weight:700;">Thất bại</span></div>
 
-        <a href="/courts.html" class="btn-home">🏠 Về trang chủ</a>
-        <a href="/booking-info.html" class="btn-retry">🔄 Thử lại</a>
+        <a href="/" class="btn-home">Về trang chủ</a>
+        <a href="${isMembership ? '/membership.html' : '/booking-info.html'}" class="btn-retry">Thử lại</a>
       </div>`;
+  }
+
+  async function refreshUserSession() {
+      const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (!user) return;
+      try {
+          const res = await fetch(`/api/users/${user.id}`);
+          const json = await res.json();
+          if (res.ok && json.success) {
+              localStorage.setItem('currentUser', JSON.stringify(json.data));
+              console.log('User session refreshed' );
+          }
+      } catch (err) {
+          console.error('Failed to refresh user session', err);
+      }
   }
 
   // Quyết định hiển thị dựa vào query param ?result=

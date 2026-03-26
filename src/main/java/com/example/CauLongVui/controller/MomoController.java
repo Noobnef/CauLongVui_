@@ -21,6 +21,7 @@ public class MomoController {
 
     private final MomoService momoService;
     private final BookingService bookingService;
+    private final com.example.CauLongVui.service.MembershipService membershipService;
 
     /**
      * POST /api/payment/momo
@@ -88,6 +89,21 @@ public class MomoController {
             } catch (Exception e) {
                 log.warn("Could not update booking status: {}", e.getMessage());
             }
+        } else if (orderId != null && orderId.startsWith("MB-")) {
+            try {
+                String[] parts = orderId.split("-");
+                if (parts.length >= 2) {
+                    Long subId = Long.parseLong(parts[1]);
+                    if (success) {
+                        membershipService.completePurchase(subId);
+                        log.info("Membership {} completed via MoMo", subId);
+                    } else {
+                        membershipService.cancelPurchase(subId);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Could not update membership status: {}", e.getMessage());
+            }
         }
 
         String redirectUrl = "/payment.html?result=" + (success ? "success" : "failed")
@@ -104,8 +120,27 @@ public class MomoController {
      * IPN tu MoMo server (server-to-server)
      */
     @PostMapping("/momo-notify")
-    public ResponseEntity<String> momoNotify(@RequestBody String body) {
-        log.info("[MOMO IPN] {}", body);
+    public ResponseEntity<String> momoNotify(@RequestBody Map<String, Object> body) {
+        log.info("[MOMO IPN] Received IPN Call: {}", body);
+        
+        try {
+            String orderId = body.get("orderId").toString();
+            int resultCode = Integer.parseInt(body.get("resultCode").toString());
+            boolean success = resultCode == 0;
+
+            if (orderId.startsWith("CLV-") && success) {
+                // ... handle booking IPN if needed (usually handled by redirect for simple apps, but IPN is better)
+            } else if (orderId.startsWith("MB-") && success) {
+                String[] parts = orderId.split("-");
+                if (parts.length >= 2) {
+                    membershipService.completePurchase(Long.parseLong(parts[1]));
+                    log.info("Membership {} completed via MoMo IPN", parts[1]);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error processing MoMo IPN: {}", e.getMessage());
+        }
+        
         return ResponseEntity.ok("OK");
     }
 }

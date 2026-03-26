@@ -80,6 +80,8 @@ footer .logo span { color: var(--green-light); }
 .nav-user-menu { position: relative; }
 
 .nav-user-btn {
+  position: relative;
+  overflow: visible;
   display: flex; align-items: center; gap: 8px;
   background: var(--green-pale); border: 1.5px solid var(--border);
   border-radius: var(--r-xl); padding: 6px 14px 6px 8px;
@@ -140,4 +142,35 @@ footer .logo span { color: var(--green-light); }
   border-radius: 9px; padding: 0 4px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 2px solid var(--white);
+}
+
+.badge-vip {
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  color: #000; font-size: 10px; font-weight: 800;
+  padding: 2px 8px; border-radius: 10px; margin-left: 6px;
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+  text-transform: uppercase; display: inline-flex; align-items: center;
+}
+
+.user-tier-tag {
+  position: absolute;
+  top: -8px;
+  right: -5px;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  border: 1px solid #fff;
+  pointer-events: none;
+  text-transform: uppercase;
+  z-index: 2;
+}
+.user-tier-tag.VIP {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+}
+.user-tier-tag.PRO {
+  background: linear-gradient(135deg, #00c6ff, #0072ff);
+  color: #fff;
 }

@@ -22,6 +22,7 @@ public class DataInitializer implements CommandLineRunner {
     private final CourtRepository courtRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.example.CauLongVui.repository.MembershipPlanRepository planRepository;
 
     @Override
     public void run(String... args) {
@@ -82,6 +83,37 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Seeded {} courts successfully.", courts.size());
         } else {
             log.info("Courts already exist ({}). Skipping seed.", courtRepository.count());
+        }
+
+        // 3. Tao goi membership mac dinh
+        if (planRepository.count() == 0) {
+            log.info("No membership plans found. Seeding default plans...");
+
+            List<com.example.CauLongVui.entity.MembershipPlan> plans = List.of(
+                    com.example.CauLongVui.entity.MembershipPlan.builder()
+                            .name("Hội viên Thường")
+                            .tier(com.example.CauLongVui.entity.MembershipTier.NORMAL)
+                            .price(0L)
+                            .durationInDays(36500)
+                            .description("Gói mặc định cho người dùng mới.")
+                            .build(),
+                    com.example.CauLongVui.entity.MembershipPlan.builder()
+                            .name("Hội viên Pro")
+                            .tier(com.example.CauLongVui.entity.MembershipTier.PRO)
+                            .price(50000L)
+                            .durationInDays(30)
+                            .description("Nhiều ưu đãi và giảm giá đặt sân.")
+                            .build(),
+                    com.example.CauLongVui.entity.MembershipPlan.builder()
+                            .name("Hội viên VIP")
+                            .tier(com.example.CauLongVui.entity.MembershipTier.VIP)
+                            .price(150000L)
+                            .durationInDays(30)
+                            .description("Ưu tiên đặt sân và giảm giá tối đa.")
+                            .build());
+
+            planRepository.saveAll(plans);
+            log.info("Seeded {} membership plans successfully.", plans.size());
         }
     }
 }

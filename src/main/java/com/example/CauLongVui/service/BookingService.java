@@ -110,8 +110,22 @@ public class BookingService {
         }
 
         // Calculate total price
-        long hours = Duration.between(bookingDTO.getStartTime(), bookingDTO.getEndTime()).toMinutes();
-        double totalPrice = (hours / 60.0) * court.getPricePerHour();
+        long minutes = Duration.between(bookingDTO.getStartTime(), bookingDTO.getEndTime()).toMinutes();
+        double totalPrice = (minutes / 60.0) * court.getPricePerHour();
+
+        // Apply membership discount
+        if (bookingDTO.getUserId() != null) {
+            com.example.CauLongVui.entity.User user = userRepository.findById(bookingDTO.getUserId()).orElse(null);
+            if (user != null && user.getMembershipTier() != null && 
+                user.getMembershipExpiry() != null && user.getMembershipExpiry().isAfter(java.time.LocalDateTime.now())) {
+                
+                if (user.getMembershipTier() == com.example.CauLongVui.entity.MembershipTier.PRO) {
+                    totalPrice *= 0.9; // 10% discount
+                } else if (user.getMembershipTier() == com.example.CauLongVui.entity.MembershipTier.VIP) {
+                    totalPrice *= 0.8; // 20% discount
+                }
+            }
+        }
 
         Booking booking = Booking.builder()
                 .court(court)

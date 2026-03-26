@@ -3,8 +3,8 @@ package com.example.CauLongVui.service;
 import com.example.CauLongVui.config.VNPayConfig;
 import com.example.CauLongVui.entity.Booking;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import com.example.CauLongVui.service.BookingService;
 
@@ -14,12 +14,20 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class VNPayServiceImpl implements VNPayService {
 
     private final VNPayConfig vnPayConfig;
     private final BookingService bookingService;
+    private final MembershipService membershipService;
+
+    public VNPayServiceImpl(VNPayConfig vnPayConfig, 
+                            BookingService bookingService, 
+                            @Lazy MembershipService membershipService) {
+        this.vnPayConfig = vnPayConfig;
+        this.bookingService = bookingService;
+        this.membershipService = membershipService;
+    }
 
     @Override
     public String createPaymentUrl(long amount, String orderInfo, String orderId, String ipAddress) {
@@ -147,11 +155,15 @@ public class VNPayServiceImpl implements VNPayService {
                             // Update status to Success
                             try {
                                 String orderId = request.getParameter("vnp_TxnRef");
-                                if (orderId != null && orderId.startsWith("CLV-")) {
+                                if (orderId != null) {
                                     String[] parts = orderId.split("-");
                                     if (parts.length >= 2) {
-                                        Long bookingId = Long.parseLong(parts[1]);
-                                        bookingService.updateBookingStatus(bookingId, Booking.BookingStatus.CONFIRMED);
+                                        Long id = Long.parseLong(parts[1]);
+                                        if (orderId.startsWith("CLV-")) {
+                                            bookingService.updateBookingStatus(id, Booking.BookingStatus.CONFIRMED);
+                                        } else if (orderId.startsWith("MB-")) {
+                                            membershipService.completePurchase(id);
+                                        }
                                     }
                                 }
                                 return "{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}";
@@ -163,11 +175,15 @@ public class VNPayServiceImpl implements VNPayService {
                             // Update status to Failed
                              try {
                                 String orderId = request.getParameter("vnp_TxnRef");
-                                if (orderId != null && orderId.startsWith("CLV-")) {
+                                if (orderId != null) {
                                     String[] parts = orderId.split("-");
                                     if (parts.length >= 2) {
-                                        Long bookingId = Long.parseLong(parts[1]);
-                                        bookingService.updateBookingStatus(bookingId, Booking.BookingStatus.CANCELLED);
+                                        Long id = Long.parseLong(parts[1]);
+                                        if (orderId.startsWith("CLV-")) {
+                                            bookingService.updateBookingStatus(id, Booking.BookingStatus.CANCELLED);
+                                        } else if (orderId.startsWith("MB-")) {
+                                            membershipService.cancelPurchase(id);
+                                        }
                                     }
                                 }
                                 return "{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}";
