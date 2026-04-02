@@ -288,6 +288,143 @@
     }
     .btn-edit-profile:hover { background: var(--green); color: #fff; }
 
+    .wallet-balance-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #103d24, #1f6a3e);
+      color: #fff;
+      margin-bottom: 18px;
+    }
+    .wallet-balance-card small {
+      display: block;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .72;
+      margin-bottom: 8px;
+    }
+    .wallet-balance-card strong {
+      display: block;
+      font-size: 30px;
+      font-weight: 900;
+    }
+    .wallet-balance-card p {
+      margin-top: 6px;
+      font-size: 13px;
+      opacity: .85;
+    }
+    .wallet-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .wallet-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all .2s;
+    }
+    .wallet-btn-primary {
+      background: #fff;
+      color: var(--green);
+    }
+    .wallet-btn-primary:hover { transform: translateY(-1px); }
+    .wallet-btn-secondary {
+      background: rgba(255,255,255,0.14);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .wallet-btn-secondary:hover { background: rgba(255,255,255,0.22); }
+    .wallet-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .wallet-transaction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .wallet-transaction-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fbfdfb;
+    }
+    .wallet-transaction-item strong {
+      display: block;
+      font-size: 14px;
+      color: var(--dark);
+      margin-bottom: 4px;
+    }
+    .wallet-transaction-item span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .wallet-amount {
+      text-align: right;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .wallet-amount.positive { color: #15803d; }
+    .wallet-amount.negative { color: #b91c1c; }
+    .wallet-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+    .wallet-status.COMPLETED { background: #dcfce7; color: #15803d; }
+    .wallet-status.PENDING { background: #fef3c7; color: #a16207; }
+    .wallet-status.FAILED { background: #fee2e2; color: #b91c1c; }
+    .wallet-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .wallet-page-btn {
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--dark);
+      border-radius: 10px;
+      padding: 9px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .wallet-page-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+    .wallet-empty {
+      text-align: center;
+      padding: 24px 18px;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
 
     /* ── Access denied ── */
     .access-denied { text-align: center; padding: 100px 24px; }
@@ -353,6 +490,30 @@
       <div class="info-row">
         <span class="info-label">Vai trò</span>
         <span class="info-value" id="infoRole">—</span>
+      </div>
+    </div>
+
+    <div class="info-card" id="wallet-section">
+      <h2>Ví của tôi</h2>
+      <div class="wallet-balance-card">
+        <div>
+          <small>Số dư khả dụng</small>
+          <strong id="walletBalance">0đ</strong>
+          <p id="walletHint">Nạp tiền để thanh toán sân nhanh hơn và nhận hoàn tiền trực tiếp vào ví.</p>
+        </div>
+        <div class="wallet-actions">
+          <button class="wallet-btn wallet-btn-primary" onclick="openTopupModal()">Nạp tiền</button>
+          <button class="wallet-btn wallet-btn-secondary" onclick="openWithdrawModal()">Rút tiền</button>
+        </div>
+      </div>
+      <div class="wallet-note">Lịch sử giao dịch gần đây. Các giao dịch rút tiền chờ admin duyệt sẽ hiển thị trạng thái `PENDING`.</div>
+      <div class="wallet-transaction-list" id="walletTransactions">
+        <div class="wallet-empty">Đang tải lịch sử giao dịch...</div>
+      </div>
+      <div class="wallet-pagination">
+        <button class="wallet-page-btn" id="walletPrevBtn" onclick="changeWalletPage(-1)">Trang trước</button>
+        <span id="walletPageInfo">Trang 1</span>
+        <button class="wallet-page-btn" id="walletNextBtn" onclick="changeWalletPage(1)">Trang sau</button>
       </div>
     </div>
 
@@ -466,12 +627,69 @@
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="topupModal" onclick="handleWalletOverlayClick(event, 'topupModal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Nạp tiền vào ví</h3>
+      <button class="modal-close" onclick="closeTopupModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-error" id="topupError"></div>
+      <div class="form-group">
+        <label>Số tiền nạp (VND)</label>
+        <input type="number" id="topupAmount" min="1000" step="1000" placeholder="Ví dụ: 100000" />
+      </div>
+      <div class="wallet-note">Hệ thống sẽ tạo link thanh toán MoMo và cộng tiền vào ví khi giao dịch thành công.</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeTopupModal()">Huỷ</button>
+        <button class="btn-save" id="topupSubmitBtn" onclick="submitTopup()">Tiếp tục qua MoMo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="withdrawModal" onclick="handleWalletOverlayClick(event, 'withdrawModal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Yêu cầu rút tiền</h3>
+      <button class="modal-close" onclick="closeWithdrawModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-error" id="withdrawError"></div>
+      <div class="form-group">
+        <label>Số tiền muốn rút (VND)</label>
+        <input type="number" id="withdrawAmount" min="1000" step="1000" placeholder="Ví dụ: 150000" />
+      </div>
+      <div class="form-group">
+        <label>Ngân hàng</label>
+        <input type="text" id="withdrawBankName" placeholder="Ví dụ: Vietcombank" />
+      </div>
+      <div class="form-group">
+        <label>Số tài khoản</label>
+        <input type="text" id="withdrawAccountNumber" placeholder="Nhập số tài khoản" />
+      </div>
+      <div class="form-group">
+        <label>Chủ tài khoản</label>
+        <input type="text" id="withdrawAccountHolder" placeholder="Nhập tên chủ tài khoản" />
+      </div>
+      <div class="wallet-note">Tiền sẽ bị trừ tạm thời khỏi ví cho đến khi admin phê duyệt hoặc từ chối yêu cầu.</div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeWithdrawModal()">Huỷ</button>
+        <button class="btn-save" id="withdrawSubmitBtn" onclick="submitWithdrawal()">Gửi yêu cầu</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="toast-container"></div>
 
 <script src="/js/app.js"></script>
 <script>
 let userBookings = []; // To store fetched bookings for modal lookups
 let currentBookingId = null;
+let walletPage = 0;
+const walletPageSize = 5;
+let walletTotalPages = 1;
 
 // ── Court image pool (shared with index.html)
 const courtImages = [
@@ -487,6 +705,179 @@ const roleMap = {
   STAFF:    ' Nhân viên',
   CUSTOMER: ' Khách hàng',
 };
+
+const walletTypeLabel = {
+  TOPUP: 'Nạp tiền',
+  PAYMENT: 'Thanh toán',
+  REFUND: 'Hoàn tiền',
+  WITHDRAWAL: 'Rút tiền',
+};
+
+function formatDateTime(dateTime) {
+  if (!dateTime) return '—';
+  const dt = new Date(dateTime);
+  return dt.toLocaleString('vi-VN');
+}
+
+function getWalletAmountClass(amount) {
+  return Number(amount || 0) >= 0 ? 'positive' : 'negative';
+}
+
+function renderWalletTransactions(items = []) {
+  const container = document.getElementById('walletTransactions');
+  if (!items.length) {
+    container.innerHTML = `<div class="wallet-empty">Chưa có giao dịch nào trong ví.</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(tx => `
+    <div class="wallet-transaction-item">
+      <div>
+        <strong>${walletTypeLabel[tx.type] || tx.type}</strong>
+        <span>${escHtml(tx.description || tx.referenceId || 'Giao dịch ví điện tử')}</span>
+        <span>${formatDateTime(tx.createdAt)}</span>
+      </div>
+      <div>
+        <div class="wallet-amount ${getWalletAmountClass(tx.amount)}">${formatCurrency(tx.amount)}</div>
+        <div class="wallet-status ${tx.status}">${tx.status}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadWalletOverview() {
+  const user = getCurrentUser();
+  if (!user) return;
+
+  try {
+    const [wallet, txPage] = await Promise.all([
+      fetchAPI(`/wallets/user/${user.id}`),
+      fetchAPI(`/wallets/user/${user.id}/transactions?page=${walletPage}&size=${walletPageSize}`)
+    ]);
+
+    document.getElementById('walletBalance').textContent = formatWalletBalance(wallet.balance);
+    renderWalletTransactions(txPage.items || []);
+
+    const total = Number(txPage.pagination?.total || 0);
+    walletTotalPages = Math.max(1, Math.ceil(total / walletPageSize));
+    document.getElementById('walletPageInfo').textContent = `Trang ${walletPage + 1} / ${walletTotalPages}`;
+    document.getElementById('walletPrevBtn').disabled = walletPage <= 0;
+    document.getElementById('walletNextBtn').disabled = walletPage >= walletTotalPages - 1;
+
+    if (typeof refreshWalletHeader === 'function') {
+      refreshWalletHeader(user.id);
+    }
+  } catch (err) {
+    document.getElementById('walletTransactions').innerHTML = `
+      <div class="wallet-empty">Không thể tải ví điện tử: ${escHtml(err.message || 'Lỗi không xác định')}</div>
+    `;
+  }
+}
+
+function changeWalletPage(delta) {
+  const nextPage = walletPage + delta;
+  if (nextPage < 0 || nextPage >= walletTotalPages) return;
+  walletPage = nextPage;
+  loadWalletOverview();
+}
+
+function handleWalletOverlayClick(event, modalId) {
+  if (event.target === document.getElementById(modalId)) {
+    document.getElementById(modalId).classList.remove('open');
+  }
+}
+
+function openTopupModal() {
+  document.getElementById('topupAmount').value = '';
+  document.getElementById('topupError').style.display = 'none';
+  document.getElementById('topupModal').classList.add('open');
+}
+
+function closeTopupModal() {
+  document.getElementById('topupModal').classList.remove('open');
+}
+
+function openWithdrawModal() {
+  document.getElementById('withdrawAmount').value = '';
+  document.getElementById('withdrawBankName').value = '';
+  document.getElementById('withdrawAccountNumber').value = '';
+  document.getElementById('withdrawAccountHolder').value = '';
+  document.getElementById('withdrawError').style.display = 'none';
+  document.getElementById('withdrawModal').classList.add('open');
+}
+
+function closeWithdrawModal() {
+  document.getElementById('withdrawModal').classList.remove('open');
+}
+
+function showWalletFormError(id, message) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.style.display = 'block';
+}
+
+async function submitTopup() {
+  const user = getCurrentUser();
+  const amount = Number(document.getElementById('topupAmount').value || 0);
+  if (!amount || amount <= 0) {
+    showWalletFormError('topupError', 'Vui lòng nhập số tiền nạp hợp lệ.');
+    return;
+  }
+
+  const btn = document.getElementById('topupSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Đang tạo thanh toán...';
+  try {
+    const data = await fetchAPI('/wallets/topup', {
+      method: 'POST',
+      body: JSON.stringify({ userId: user.id, amount })
+    });
+    window.location.href = data.payUrl;
+  } catch (err) {
+    showWalletFormError('topupError', err.message || 'Không thể tạo yêu cầu nạp tiền.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Tiếp tục qua MoMo';
+  }
+}
+
+async function submitWithdrawal() {
+  const user = getCurrentUser();
+  const amount = Number(document.getElementById('withdrawAmount').value || 0);
+  const bankName = document.getElementById('withdrawBankName').value.trim();
+  const accountNumber = document.getElementById('withdrawAccountNumber').value.trim();
+  const accountHolder = document.getElementById('withdrawAccountHolder').value.trim();
+
+  if (!amount || amount <= 0 || !bankName || !accountNumber || !accountHolder) {
+    showWalletFormError('withdrawError', 'Vui lòng nhập đầy đủ thông tin rút tiền.');
+    return;
+  }
+
+  const btn = document.getElementById('withdrawSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Đang gửi...';
+  try {
+    await fetchAPI('/wallets/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({
+        userId: user.id,
+        amount,
+        bankName,
+        accountNumber,
+        accountHolder
+      })
+    });
+    closeWithdrawModal();
+    showToast('Đã tạo yêu cầu rút tiền. Admin sẽ duyệt trong trang quản lý.', 'success');
+    walletPage = 0;
+    await loadWalletOverview();
+  } catch (err) {
+    showWalletFormError('withdrawError', err.message || 'Không thể tạo yêu cầu rút tiền.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Gửi yêu cầu';
+  }
+}
 
 // ── Status helpers
 const statusLabel = {
@@ -662,6 +1053,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('infoEmail').textContent = user.email    || '—';
   document.getElementById('infoPhone').textContent = user.phone    || '—';
   document.getElementById('infoRole').textContent  = roleMap[user.role] || user.role || '—';
+  loadWalletOverview();
 
   // Hide specific sections for ADMIN
   if (user.role === 'ADMIN') {
@@ -754,7 +1146,7 @@ async function saveProfile() {
     }
 
     // Update localStorage
-    const updated = { ...user, fullName: json.data.fullName, phone: json.data.phone };
+    const updated = { ...user, ...json.data };
     localStorage.setItem('currentUser', JSON.stringify(updated));
 
     // Refresh UI
@@ -785,6 +1177,9 @@ function refreshProfileUI(user) {
   // Info rows
   document.getElementById('infoName').textContent  = user.fullName || '—';
   document.getElementById('infoPhone').textContent = user.phone    || '—';
+  if (typeof refreshWalletHeader === 'function' && user.id) {
+    refreshWalletHeader(user.id);
+  }
 
   // Reload bookings if phone changed
   if (user.phone) loadBookings(user.phone);
@@ -875,7 +1270,7 @@ async function cancelBookingFromProfile() {
     const json = await res.json();
     if (!res.ok || !json.success) throw new Error(json.message || 'Hủy thất bại');
     
-    showToast('✅ Đã hủy đặt sân thành công!', 'success');
+    showToast('✅ Đã hủy đặt sân. Nếu booking đã thanh toán, tiền đã được hoàn về ví.', 'success');
     closeBookingModal();
     // Refresh bookings
     const user = getCurrentUser();

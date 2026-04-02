@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Thông tin đặt sân – Cầu Lông Vui</title>
+  <title>Thông tin đặt sân - Cầu Lông Vui</title>
   <link rel="icon" type="image/png" href="/favicon.png">
   <meta name="viewport" content="width=device-width, initial=1.0">
   <link rel="stylesheet" href="/css/momo-booking.css" />
@@ -50,8 +50,18 @@
     </div>
   </div>
 
-  <div style="padding: 15px; color:#666; font-size:13px; margin-bottom: 20px;">
-    <i>⚠️ Thanh toán qua Ví MoMo — bạn sẽ được chuyển đến trang MoMo để quét QR và hoàn tất.</i>
+  <div style="padding: 15px; color:#666; font-size:13px; margin-bottom: 10px;">
+    <i>⚠️ Bạn có thể thanh toán ngay bằng ví điện tử nội bộ hoặc chuyển sang MoMo để quét QR và hoàn tất.</i>
+  </div>
+
+  <div class="info-section" id="walletStatusBox" style="display:none; margin-bottom: 18px;">
+    <div class="info-row" style="justify-content:space-between; align-items:center;">
+      <span><b>Số dư ví hiện tại</b></span>
+      <span id="walletBalanceText" style="font-weight:900; color:var(--green);">0 đ</span>
+    </div>
+    <div class="info-row" style="border-bottom:none; padding-bottom:0;">
+      <span id="walletStatusText" style="font-size:13px; color:#666;">Đang kiểm tra số dư ví...</span>
+    </div>
   </div>
 
   <div class="info-section light" style="margin-bottom: 150px; border-radius: 8px;">
@@ -59,7 +69,7 @@
       <input type="checkbox" id="chk-ghepkeo" style="width:18px; height:18px; accent-color:var(--green);" onchange="toggleGhepKeo()">
       <label for="chk-ghepkeo" style="font-weight:700; color:var(--dark); cursor:pointer;">Đăng lên sàn Ghép Kèo tìm đồng đội</label>
     </div>
-    
+
     <div id="ghepkeo-fields" style="display:none; border-top:1px dashed #ccc; padding-top:12px; margin-top:12px;">
       <div class="input-group">
         <label>Tiêu đề (ngắn gọn) *</label>
@@ -91,29 +101,64 @@
   </div>
 
   <div class="bottom-bar">
-    <button class="btn-next" id="payBtn" onclick="goToPay()">XÁC NHẬN & THANH TOÁN MOMO</button>
-    <button class="btn-next" style="background:#ff9800; margin-top:10px;" onclick="goToPay(true)">🛠 (DEV) BỎ QUA APP - TEST THÀNH CÔNG</button>
+    <button class="btn-next" id="walletPayBtn" style="background:#1f6a3e; margin-bottom:10px;" onclick="goToPay('wallet')">THANH TOÁN BẰNG VÍ</button>
+    <button class="btn-next" id="payBtn" onclick="goToPay('momo')">XÁC NHẬN & THANH TOÁN MOMO</button>
+    <button class="btn-next" style="background:#ff9800; margin-top:10px;" onclick="goToPay('momo', true)">🛠 (DEV) BỎ QUA APP - TEST THÀNH CÔNG</button>
   </div>
 
   <script>
-    // Đọc thông tin từ localStorage (lưu từ schedule.html)
-    const price     = parseInt(localStorage.getItem('bk_price') || '0');
-    const time      = localStorage.getItem('bk_time')      || '0h00';
+    const price = parseInt(localStorage.getItem('bk_price') || '0');
+    const time = localStorage.getItem('bk_time') || '0h00';
     const courtName = localStorage.getItem('bk_courtName') || 'San cau long';
-    const courtId   = localStorage.getItem('bk_courtId')   || '';
-    const dateStr   = localStorage.getItem('bk_date')      || new Date().toLocaleDateString('vi-VN');
+    const courtId = localStorage.getItem('bk_courtId') || '';
+    const dateStr = localStorage.getItem('bk_date') || new Date().toLocaleDateString('vi-VN');
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
 
     document.getElementById('t-court').innerText = courtName;
-    document.getElementById('t-date').innerText  = dateStr;
-    document.getElementById('t-hour').innerText  = time;
+    document.getElementById('t-date').innerText = dateStr;
+    document.getElementById('t-hour').innerText = time;
     document.getElementById('t-price').innerText = price.toLocaleString('vi-VN') + ' đ';
-    document.getElementById('t-pay').innerText   = price.toLocaleString('vi-VN') + ' đ';
+    document.getElementById('t-pay').innerText = price.toLocaleString('vi-VN') + ' đ';
 
-    // Tự động điền thông tin nếu đã đăng nhập
-    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
     if (user) {
       document.getElementById('cus-name').value = user.fullName || '';
       document.getElementById('cus-phone').value = user.phone || '';
+      loadWalletStatus();
+    } else {
+      document.getElementById('walletStatusBox').style.display = 'block';
+      document.getElementById('walletStatusText').textContent = 'Đăng nhập để dùng số dư ví khi thanh toán.';
+      document.getElementById('walletPayBtn').disabled = true;
+      document.getElementById('walletPayBtn').textContent = 'ĐĂNG NHẬP ĐỂ DÙNG VÍ';
+    }
+
+    function formatMoney(n) {
+      return Number(n || 0).toLocaleString('vi-VN') + ' đ';
+    }
+
+    async function loadWalletStatus() {
+      try {
+        const res = await fetch(`/api/wallets/user/${user.id}`);
+        const json = await res.json();
+        document.getElementById('walletStatusBox').style.display = 'block';
+        if (!res.ok || !json.success) throw new Error(json.message || 'Không thể tải ví');
+
+        const balance = Number(json.data.balance || 0);
+        document.getElementById('walletBalanceText').textContent = formatMoney(balance);
+
+        const walletBtn = document.getElementById('walletPayBtn');
+        if (balance >= price) {
+          document.getElementById('walletStatusText').textContent = 'Số dư đủ để thanh toán booking ngay bằng ví điện tử.';
+          walletBtn.disabled = false;
+        } else {
+          document.getElementById('walletStatusText').textContent = 'Số dư không đủ. Vui lòng nạp thêm tiền hoặc chuyển sang MoMo.';
+          walletBtn.disabled = true;
+          walletBtn.textContent = 'SỐ DƯ KHÔNG ĐỦ';
+        }
+      } catch (err) {
+        document.getElementById('walletStatusBox').style.display = 'block';
+        document.getElementById('walletStatusText').textContent = err.message;
+        document.getElementById('walletPayBtn').disabled = true;
+      }
     }
 
     function toggleGhepKeo() {
@@ -121,102 +166,152 @@
       document.getElementById('ghepkeo-fields').style.display = chk ? 'block' : 'none';
     }
 
-    async function goToPay(devBypass = false) {
-      const name  = document.getElementById('cus-name').value.trim();
-      const phone = document.getElementById('cus-phone').value.trim();
-      if (!name || !phone) { alert('Vui lòng nhập Tên và Số điện thoại!'); return; }
+    function setPaymentButtonsLoading(loading, method) {
+      const momoBtn = document.getElementById('payBtn');
+      const walletBtn = document.getElementById('walletPayBtn');
 
-      const payBtn = document.getElementById('payBtn');
-      payBtn.disabled = true;
-      payBtn.textContent = 'Đang tạo thanh toán...';
-
-      // Lưu thông tin khách hàng
-      localStorage.setItem('bk_name',  name);
-      localStorage.setItem('bk_phone', phone);
-
-      // Kèo ghép (nếu có)
-      const isGhepKeo = document.getElementById('chk-ghepkeo').checked;
-      if (isGhepKeo) {
-        const gkTitle = document.getElementById('gk-title').value.trim();
-        const gkReq = document.getElementById('gk-req').value;
-        const gkCost = document.getElementById('gk-cost').value;
-        if(!gkTitle || !gkReq || !gkCost) {
-            alert('Vui lòng nhập đủ thông tin Ghép Kèo (Tiêu đề, Số người, Tiền)!');
-            payBtn.disabled = false;
-            payBtn.textContent = 'XÁC NHẬN & THANH TOÁN MOMO';
-            return;
+      if (!loading) {
+        momoBtn.disabled = false;
+        momoBtn.textContent = 'XÁC NHẬN & THANH TOÁN MOMO';
+        if (user) {
+          walletBtn.textContent = 'THANH TOÁN BẰNG VÍ';
+          loadWalletStatus();
         }
-        const gkPayload = {
-            title: gkTitle,
-            level: document.getElementById('gk-level').value,
-            requiredPlayers: parseInt(gkReq),
-            costPerPerson: parseFloat(gkCost)
-        };
-        localStorage.setItem('gk_pending', JSON.stringify(gkPayload));
-      } else {
-        localStorage.removeItem('gk_pending');
+        return;
       }
 
+      momoBtn.disabled = true;
+      walletBtn.disabled = true;
+      if (method === 'wallet') {
+        walletBtn.textContent = 'ĐANG THANH TOÁN...';
+      } else {
+        momoBtn.textContent = 'ĐANG TẠO THANH TOÁN...';
+      }
+    }
+
+    function buildBookingPayload(name, phone, paymentMethod) {
+      return {
+        courtId: parseInt(courtId),
+        userId: user ? user.id : null,
+        customerName: name,
+        customerPhone: phone,
+        bookingDate: localStorage.getItem('bk_dateRaw') || new Date().toISOString().split('T')[0],
+        startTime: localStorage.getItem('bk_startTime') || '07:00',
+        endTime: localStorage.getItem('bk_endTime') || '09:00',
+        totalPrice: price,
+        status: 'PENDING',
+        paymentMethod
+      };
+    }
+
+    function persistGhepKeoSelection() {
+      const isGhepKeo = document.getElementById('chk-ghepkeo').checked;
+      if (!isGhepKeo) {
+        localStorage.removeItem('gk_pending');
+        return true;
+      }
+
+      const gkTitle = document.getElementById('gk-title').value.trim();
+      const gkReq = document.getElementById('gk-req').value;
+      const gkCost = document.getElementById('gk-cost').value;
+      if (!gkTitle || !gkReq || !gkCost) {
+        alert('Vui lòng nhập đủ thông tin Ghép Kèo (Tiêu đề, Số người, Tiền)!');
+        return false;
+      }
+
+      localStorage.setItem('gk_pending', JSON.stringify({
+        title: gkTitle,
+        level: document.getElementById('gk-level').value,
+        requiredPlayers: parseInt(gkReq),
+        costPerPerson: parseFloat(gkCost)
+      }));
+      return true;
+    }
+
+    async function createBookingBeforePayment(name, phone, paymentMethod) {
+      const holdId = localStorage.getItem('bk_holdId');
+      const url = holdId ? `/api/bookings?holdId=${holdId}` : '/api/bookings';
+
+      const bookingRes = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildBookingPayload(name, phone, paymentMethod))
+      });
+      const bookingJson = await bookingRes.json();
+      if (!bookingRes.ok || !bookingJson.success || !bookingJson.data) {
+        throw new Error(bookingJson.message || 'Không thể tạo booking');
+      }
+
+      const bookingId = bookingJson.data.id;
+      localStorage.setItem('bk_bookingId', bookingId);
+      return bookingId;
+    }
+
+    async function goToPay(method = 'momo', devBypass = false) {
+      const name = document.getElementById('cus-name').value.trim();
+      const phone = document.getElementById('cus-phone').value.trim();
+      if (!name || !phone) {
+        alert('Vui lòng nhập Tên và Số điện thoại!');
+        return;
+      }
+      if (method === 'wallet' && !user) {
+        alert('Bạn cần đăng nhập để thanh toán bằng ví.');
+        return;
+      }
+      if (!persistGhepKeoSelection()) return;
+
+      localStorage.setItem('bk_name', name);
+      localStorage.setItem('bk_phone', phone);
+      setPaymentButtonsLoading(true, method);
+
       try {
-        // 1. Tạo booking trước
-        const holdId = localStorage.getItem('bk_holdId');
-        const url = holdId ? `/api/bookings?holdId=${holdId}` : '/api/bookings';
+        const bookingId = await createBookingBeforePayment(
+          name,
+          phone,
+          method === 'wallet' ? 'WALLET' : 'MOMO'
+        );
 
-        const bookingRes = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            courtId:      parseInt(courtId),
-            userId:       user ? user.id : null,
-            customerName: name,
-            customerPhone: phone,
-            bookingDate:   localStorage.getItem('bk_dateRaw') || new Date().toISOString().split('T')[0],
-            startTime:     localStorage.getItem('bk_startTime') || '07:00',
-            endTime:       localStorage.getItem('bk_endTime')   || '09:00',
-            totalPrice:    price,
-            status:        'PENDING'
-          })
-        });
-        const bookingJson = await bookingRes.json();
+        if (method === 'wallet') {
+          const walletRes = await fetch(`/api/wallets/bookings/${bookingId}/pay`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id })
+          });
+          const walletJson = await walletRes.json();
+          if (!walletRes.ok || !walletJson.success) {
+            throw new Error(walletJson.message || 'Thanh toán ví thất bại');
+          }
 
-        let bookingId = 0;
-        if (bookingJson.success && bookingJson.data) {
-          bookingId = bookingJson.data.id;
-          localStorage.setItem('bk_bookingId', bookingId);
+          window.location.href = `/payment.html?result=success&flow=wallet-booking&orderId=BOOKING-${bookingId}&amount=${price}&message=Thanh_toan_vi_thanh_cong`;
+          return;
         }
 
         if (devBypass) {
-          // Bỏ qua gọi lên MoMo, tự giả lập MoMo trả kết quả thành công về hệ thống
           window.location.href = `/api/payment/momo-return?orderId=CLV-${bookingId}-DEVTEST&amount=${price}&resultCode=0&message=Success_Dev_Test&transId=9999999999`;
           return;
         }
 
-        // 2. Gọi API tạo MoMo payment
         const momoRes = await fetch('/api/payment/momo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            bookingId:    bookingId,
-            amount:       price,
-            courtName:    courtName,
+            bookingId,
+            amount: price,
+            courtName,
             customerName: name
           })
         });
         const momoJson = await momoRes.json();
-
         if (momoJson.success && momoJson.data && momoJson.data.payUrl) {
-          // Redirect tới trang thanh toán MoMo thật
           window.location.href = momoJson.data.payUrl;
-        } else {
-          alert('Lỗi tạo thanh toán MoMo: ' + (momoJson.message || 'Không xác định'));
-          payBtn.disabled = false;
-          payBtn.textContent = 'XÁC NHẬN & THANH TOÁN MOMO';
+          return;
         }
+
+        throw new Error(momoJson.message || 'Không thể tạo thanh toán MoMo');
       } catch (err) {
         console.error(err);
-        alert('Lỗi kết nối: ' + err.message);
-        payBtn.disabled = false;
-        payBtn.textContent = 'XÁC NHẬN & THANH TOÁN MOMO';
+        alert('Lỗi: ' + err.message);
+        setPaymentButtonsLoading(false, method);
       }
     }
   </script>

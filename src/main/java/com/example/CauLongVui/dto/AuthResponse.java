@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,5 +20,6 @@ public class AuthResponse {
     private User.Role role;
     private com.example.CauLongVui.entity.MembershipTier membershipTier;
     private java.time.LocalDateTime membershipExpiry;
+    private BigDecimal walletBalance;
     private String message;
 }

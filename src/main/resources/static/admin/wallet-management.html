@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý ví điện tử - Cầu Lông Vui</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <link rel="stylesheet" href="/css/header-footer.css" />
+  <style>
+    body { font-family: 'Be Vietnam Pro', sans-serif; background: var(--bg); }
+    .page { padding: 90px 0 60px; min-height: 100vh; }
+    .container { max-width: 1250px; margin: 0 auto; padding: 0 24px; }
+    .header { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+    .title { font-size: 28px; font-weight: 900; color: var(--dark); }
+    .title span { color: var(--green); }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .stats { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:22px; }
+    .stat {
+      background:#fff; border:1px solid var(--border); border-radius:14px;
+      padding:14px 18px; min-width:170px; box-shadow: var(--shadow-sm);
+    }
+    .stat strong { display:block; font-size:26px; font-weight:900; color:var(--dark); margin-bottom:4px; }
+    .toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
+    .toolbar input, .toolbar select {
+      padding: 10px 14px; border:1.5px solid var(--border); border-radius:10px; background:#fff; font-family:inherit; font-size:14px;
+    }
+    .toolbar button {
+      background:var(--green); color:#fff; border:none; border-radius:10px; padding:10px 16px; font-weight:800; cursor:pointer; font-family:inherit;
+    }
+    .table-wrap {
+      background:#fff; border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow: var(--shadow-sm);
+    }
+    table { width:100%; border-collapse:collapse; }
+    th, td { padding:14px 16px; text-align:left; border-bottom:1px solid #eef2f7; font-size:14px; vertical-align:top; }
+    th { background:#f8fafc; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    tbody tr:hover { background:#fbfdfb; }
+    .badge {
+      display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 10px; font-size:11px; font-weight:800;
+    }
+    .badge.PENDING { background:#fef3c7; color:#a16207; }
+    .badge.APPROVED { background:#dcfce7; color:#15803d; }
+    .badge.REJECTED { background:#fee2e2; color:#b91c1c; }
+    .amount { font-weight:900; color:var(--green); }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn-approve, .btn-reject {
+      border:none; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit;
+    }
+    .btn-approve { background:#dcfce7; color:#15803d; }
+    .btn-reject { background:#fee2e2; color:#b91c1c; }
+    .btn-approve:disabled, .btn-reject:disabled { opacity:.45; cursor:not-allowed; }
+    .empty { text-align:center; padding:40px 20px; color:var(--muted); }
+    .access-denied { text-align:center; padding:120px 24px; }
+  </style>
+</head>
+<body>
+<div id="header-placeholder"></div>
+
+<div id="accessDenied" class="page" style="display:none;">
+  <div class="access-denied">
+    <div style="font-size:64px;">🚫</div>
+    <h2>Không có quyền truy cập</h2>
+    <p>Trang này chỉ dành cho quản trị viên.</p>
+  </div>
+</div>
+
+<div id="walletPage" class="page" style="display:none;">
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="sub"><a href="/admin/admin.html" style="color:var(--green); text-decoration:none;">Quản trị</a> › Ví điện tử</div>
+        <div class="title">Quản lý <span>rút tiền ví</span></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><strong id="pendingCount">0</strong><span>Chờ duyệt</span></div>
+      <div class="stat"><strong id="approvedCount">0</strong><span>Đã duyệt</span></div>
+      <div class="stat"><strong id="rejectedCount">0</strong><span>Từ chối</span></div>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="Tìm tên, email, ngân hàng..." oninput="applyFilter()" />
+      <select id="statusFilter" onchange="applyFilter()">
+        <option value="">Tất cả trạng thái</option>
+        <option value="PENDING">PENDING</option>
+        <option value="APPROVED">APPROVED</option>
+        <option value="REJECTED">REJECTED</option>
+      </select>
+      <button onclick="loadWithdrawals()">Làm mới</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Người dùng</th>
+            <th>Thông tin nhận tiền</th>
+            <th>Số tiền</th>
+            <th>Trạng thái</th>
+            <th>Thời gian</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="withdrawalTable">
+          <tr><td colspan="7" class="empty">Đang tải dữ liệu...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="footer-placeholder"></div>
+<div id="toast-container"></div>
+
+<script src="/js/app.js"></script>
+<script>
+let allWithdrawals = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  const user = getCurrentUser();
+  if (!user || user.role !== 'ADMIN') {
+    document.getElementById('accessDenied').style.display = 'block';
+    return;
+  }
+  document.getElementById('walletPage').style.display = 'block';
+  loadWithdrawals();
+});
+
+async function loadWithdrawals() {
+  const tbody = document.getElementById('withdrawalTable');
+  tbody.innerHTML = `<tr><td colspan="7" class="empty">Đang tải dữ liệu...</td></tr>`;
+  try {
+    const res = await fetch('/api/admin/wallets/withdrawals');
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Không thể tải danh sách');
+    allWithdrawals = json.data || [];
+    updateStats();
+    applyFilter();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">${err.message}</td></tr>`;
+  }
+}
+
+function updateStats() {
+  document.getElementById('pendingCount').textContent = allWithdrawals.filter(x => x.status === 'PENDING').length;
+  document.getElementById('approvedCount').textContent = allWithdrawals.filter(x => x.status === 'APPROVED').length;
+  document.getElementById('rejectedCount').textContent = allWithdrawals.filter(x => x.status === 'REJECTED').length;
+}
+
+function applyFilter() {
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  let rows = allWithdrawals;
+
+  if (status) rows = rows.filter(x => x.status === status);
+  if (search) {
+    rows = rows.filter(x =>
+      (x.userName || '').toLowerCase().includes(search) ||
+      (x.userEmail || '').toLowerCase().includes(search) ||
+      (x.bankName || '').toLowerCase().includes(search) ||
+      (x.accountHolder || '').toLowerCase().includes(search)
+    );
+  }
+
+  renderTable(rows);
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('withdrawalTable');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Không có yêu cầu rút tiền phù hợp.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(item => `
+    <tr>
+      <td>#${item.id}</td>
+      <td>
+        <strong>${escapeHtml(item.userName || 'Người dùng')}</strong><br/>
+        <span style="color:var(--muted); font-size:12px;">${escapeHtml(item.userEmail || '')}</span><br/>
+        <span style="color:var(--muted); font-size:12px;">${escapeHtml(item.userPhone || '')}</span>
+      </td>
+      <td>
+        <strong>${escapeHtml(item.bankName)}</strong><br/>
+        <span>${escapeHtml(item.accountHolder)}</span><br/>
+        <span style="color:var(--muted); font-size:12px;">${escapeHtml(item.accountNumber)}</span>
+      </td>
+      <td class="amount">${formatCurrency(item.amount)}</td>
+      <td><span class="badge ${item.status}">${item.status}</span></td>
+      <td>${new Date(item.createdAt).toLocaleString('vi-VN')}</td>
+      <td>
+        <div class="actions">
+          <button class="btn-approve" ${item.status !== 'PENDING' ? 'disabled' : ''} onclick="reviewWithdrawal(${item.id}, 'APPROVED')">Duyệt</button>
+          <button class="btn-reject" ${item.status !== 'PENDING' ? 'disabled' : ''} onclick="reviewWithdrawal(${item.id}, 'REJECTED')">Từ chối</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function reviewWithdrawal(id, status) {
+  const confirmText = status === 'APPROVED'
+    ? 'Duyệt yêu cầu rút tiền này?'
+    : 'Từ chối yêu cầu này? Số tiền sẽ được hoàn lại vào ví người dùng.';
+  if (!confirm(confirmText)) return;
+
+  try {
+    const res = await fetch(`/api/admin/wallets/withdrawals/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.message || 'Không thể cập nhật');
+    showToast(status === 'APPROVED' ? 'Đã duyệt yêu cầu rút tiền.' : 'Đã từ chối và hoàn tiền về ví.', 'success');
+    await loadWithdrawals();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

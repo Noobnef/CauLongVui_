@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
@@ -55,7 +56,24 @@ public class Booking {
     @Column
     private Double passPrice;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private PaymentMethod paymentMethod;
+
+    @Column(length = 120)
+    private String paymentReference;
+
+    @Column
+    private LocalDateTime paidAt;
+
+    @Column
+    private LocalDateTime refundedAt;
+
     public enum BookingStatus {
         PENDING, CONFIRMED, CANCELLED, COMPLETED
+    }
+
+    public enum PaymentMethod {
+        CASH, MOMO, WALLET
     }
 }

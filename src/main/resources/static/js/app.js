@@ -1,12 +1,9 @@
 /**
- * app.js — Shared utilities for CauLongVui front-end
+ * app.js - Shared utilities for CauLongVui front-end
  */
 
 const API_BASE = '/api';
 
-// ───────────────────────────────────────────────
-// Generic fetch wrapper
-// ───────────────────────────────────────────────
 async function fetchAPI(endpoint, options = {}) {
   const defaultOptions = {
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -25,14 +22,16 @@ async function fetchAPI(endpoint, options = {}) {
   }
 }
 
-// ───────────────────────────────────────────────
-// Formatting helpers
-// ───────────────────────────────────────────────
 function formatCurrency(amount) {
   if (amount == null) return '—';
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency', currency: 'VND', maximumFractionDigits: 0
   }).format(amount);
+}
+
+function formatWalletBalance(amount) {
+  const numeric = Number(amount || 0);
+  return `${numeric.toLocaleString('vi-VN')}đ`;
 }
 
 function formatDate(dateStr) {
@@ -47,9 +46,6 @@ function formatTime(timeStr) {
   return `${h}:${m}`;
 }
 
-// ───────────────────────────────────────────────
-// Toast notifications
-// ───────────────────────────────────────────────
 const toastContainer = (() => {
   let el = document.getElementById('toast-container');
   if (!el) {
@@ -76,9 +72,6 @@ function showToast(message, type = 'success', duration = 4000) {
   }, duration);
 }
 
-// ───────────────────────────────────────────────
-// Status / badge helpers
-// ───────────────────────────────────────────────
 function courtStatusBadge(status) {
   const map = {
     AVAILABLE:   { cls: 'badge-success', label: '🟢 Còn trống' },
@@ -100,18 +93,12 @@ function bookingStatusBadge(status) {
   return `<span class="badge ${s.cls}">${s.label}</span>`;
 }
 
-// ───────────────────────────────────────────────
-// Skeleton loader helper
-// ───────────────────────────────────────────────
 function renderSkeletons(container, count = 6, height = '280px') {
   container.innerHTML = Array.from({ length: count }, () =>
     `<div class="skeleton" style="height:${height};border-radius:14px;"></div>`
   ).join('');
 }
 
-// ───────────────────────────────────────────────
-// Dynamic Component Loading
-// ───────────────────────────────────────────────
 async function loadComponent(id, url) {
   const container = document.getElementById(id);
   if (!container) return;
@@ -121,8 +108,7 @@ async function loadComponent(id, url) {
     const html = await res.text();
     container.innerHTML = html;
     updateActiveNavLink();
-    
-    // Khởi tạo các sự kiện cho header nếu có
+
     if (id === 'header-placeholder') {
       initHeaderEvents();
     }
@@ -137,14 +123,51 @@ function updateActiveNavLink() {
     const href = a.getAttribute('href');
     if (!href) return;
     const cleanHref = href.replace(/\/$/, '');
-    
-    // Logic so khớp đường dẫn
-    const isActive = (path.endsWith(cleanHref) && cleanHref !== '') || 
-                     (path === '/' && (cleanHref === '/' || cleanHref === '/index.html')) ||
-                     (path.endsWith('index.html') && (cleanHref === '/' || cleanHref === '/index.html'));
-    
+
+    const isActive = (path.endsWith(cleanHref) && cleanHref !== '') ||
+      (path === '/' && (cleanHref === '/' || cleanHref === '/index.html')) ||
+      (path.endsWith('index.html') && (cleanHref === '/' || cleanHref === '/index.html'));
+
     a.classList.toggle('active', isActive);
   });
+}
+
+function getCurrentUser() {
+  try {
+    return JSON.parse(localStorage.getItem('currentUser') || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function setCurrentUser(user) {
+  localStorage.setItem('currentUser', JSON.stringify(user));
+}
+
+function updateStoredWalletBalance(balance) {
+  const user = getCurrentUser();
+  if (!user) return;
+  user.walletBalance = balance;
+  setCurrentUser(user);
+}
+
+async function refreshWalletHeader(userId) {
+  if (!userId) return null;
+  try {
+    const wallet = await fetchAPI(`/wallets/user/${userId}`);
+    const balanceEl = document.getElementById('navWalletBalance');
+    if (balanceEl) {
+      balanceEl.textContent = formatWalletBalance(wallet.balance);
+    }
+    updateStoredWalletBalance(wallet.balance);
+    return wallet;
+  } catch (err) {
+    const balanceEl = document.getElementById('navWalletBalance');
+    if (balanceEl && !balanceEl.textContent.trim()) {
+      balanceEl.textContent = formatWalletBalance(0);
+    }
+    return null;
+  }
 }
 
 function initHeaderEvents() {
@@ -155,8 +178,7 @@ function initHeaderEvents() {
     });
   }
 
-  // ── Hiển thị trạng thái đăng nhập trong header
-  const user      = getCurrentUser();
+  const user = getCurrentUser();
   const navActions = document.getElementById('navActions');
   if (!navActions) return;
 
@@ -167,12 +189,10 @@ function initHeaderEvents() {
         navLinks.style.display = 'none';
       }
     }
-    
-    // Đã đăng nhập — hiển thị avatar + tên + dropdown
+
     const cartCount = getCartCount();
 
     if (user.role === 'ADMIN') {
-      // ── ADMIN header: chỉ hiện nút Quản trị hệ thống
       navActions.innerHTML = `
         <a href="/admin/admin.html" class="btn-manage">Quản lý</a>
         <div class="nav-user-menu" id="navUserMenu">
@@ -186,15 +206,18 @@ function initHeaderEvents() {
               <div class="dropdown-name">${user.fullName}</div>
               <div class="dropdown-role">${roleLabel(user.role)}</div>
             </div>
-            <a href="/profile.html"      class="dropdown-item">👤 Tài khoản của tôi</a>
-            <a href="/admin/admin.html"  class="dropdown-item">⚙️ Quản trị hệ thống</a>
+            <a href="/profile.html" class="dropdown-item">👤 Tài khoản của tôi</a>
+            <a href="/admin/admin.html" class="dropdown-item">⚙️ Quản trị hệ thống</a>
             <a href="/auth/login.html" class="dropdown-item dropdown-logout" onclick="handleLogout();return false;">🚪 Đăng xuất</a>
           </div>
         </div>
       `;
     } else {
-      // ── Non-admin: giỏ hàng + dropdown đầy đủ + nút đặt sân
       navActions.innerHTML = `
+        <a href="/profile.html#wallet-section" class="nav-wallet-chip" id="navWalletChip" title="Mở ví điện tử">
+          <span class="nav-wallet-label">Số dư</span>
+          <strong id="navWalletBalance">${formatWalletBalance(user.walletBalance)}</strong>
+        </a>
         <a href="/cart.html" class="nav-cart-btn" id="navCartBtn" title="Giỏ hàng">
           🛒
           <span class="cart-badge" id="cartBadge" style="${cartCount > 0 ? '' : 'display:none'}"> ${cartCount}</span>
@@ -214,11 +237,12 @@ function initHeaderEvents() {
                 ${user.membershipTier && user.membershipTier !== 'NORMAL' ? `<span class="badge-vip">⭐ ${user.membershipTier}</span>` : ''}
               </div>
             </div>
-            <a href="/profile.html"     class="dropdown-item">👤 Tài khoản của tôi</a>
-            <a href="/membership.html"  class="dropdown-item" style="color:var(--green);font-weight:700;">💎 Nâng cấp tài khoản</a>
+            <a href="/profile.html" class="dropdown-item">👤 Tài khoản của tôi</a>
+            <a href="/profile.html#wallet-section" class="dropdown-item">💳 Ví của tôi</a>
+            <a href="/membership.html" class="dropdown-item" style="color:var(--green);font-weight:700;">💎 Nâng cấp tài khoản</a>
             <a href="/my-bookings.html" class="dropdown-item">🏸 Sân đã đặt</a>
-            <a href="/cart.html"        class="dropdown-item">🛒 Giỏ hàng của tôi</a>
-            <a href="/my-orders.html"   class="dropdown-item">📋 Mặt hàng đã đặt</a>
+            <a href="/cart.html" class="dropdown-item">🛒 Giỏ hàng của tôi</a>
+            <a href="/my-orders.html" class="dropdown-item">📋 Mặt hàng đã đặt</a>
             <a href="/my-racket-rentals.html" class="dropdown-item">🎾 Vợt đã thuê</a>
             ${user.role === 'STAFF' ? '<a href="/admin/court-management.html" class="dropdown-item">📋 Quản lý sân</a>' : ''}
             <a href="/auth/login.html" class="dropdown-item dropdown-logout" onclick="handleLogout();return false;">🚪 Đăng xuất</a>
@@ -229,9 +253,6 @@ function initHeaderEvents() {
       `;
     }
 
-    // logout handled via handleLogout() onclick
-
-    // Đóng dropdown khi click ngoài
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#navUserMenu')) {
         const dd = document.getElementById('navUserDropdown');
@@ -239,8 +260,10 @@ function initHeaderEvents() {
       }
     });
 
+    if (user.role !== 'ADMIN') {
+      refreshWalletHeader(user.id);
+    }
   } else {
-    // Chưa đăng nhập — hiển thị Đăng nhập + Đăng ký
     navActions.innerHTML = `
       <a href="/auth/login.html" class="btn-login">Đăng nhập</a>
       <a href="/auth/register.html" class="btn-nav-cta">Đăng ký</a>
@@ -248,19 +271,9 @@ function initHeaderEvents() {
   }
 }
 
-// ── Toggle user dropdown menu
 function toggleUserMenu() {
   const dd = document.getElementById('navUserDropdown');
   if (dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
-}
-
-// ── Auth Helpers
-function getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem('currentUser') || 'null');
-  } catch {
-    return null;
-  }
 }
 
 function hasRole(...roles) {
@@ -289,12 +302,13 @@ function handleLogout() {
   window.location.replace('/auth/login.html');
 }
 
-// ── Cart helpers
 function getCartCount() {
   try {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     return cart.reduce((sum, item) => sum + (item.qty || 1), 0);
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
 function updateCartBadge() {
@@ -310,7 +324,6 @@ function roleLabel(role) {
   return map[role] || role;
 }
 
-// Khởi tạo header và footer khi trang tải xong
 document.addEventListener('DOMContentLoaded', () => {
   loadComponent('header-placeholder', '/components/header.html');
   loadComponent('footer-placeholder', '/components/footer.html');

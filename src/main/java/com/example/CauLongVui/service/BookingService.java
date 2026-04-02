@@ -12,8 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ public class BookingService {
     private final CourtRepository courtRepository;
     private final UserRepository userRepository;
     private final BookingHoldService bookingHoldService;
+    private final WalletService walletService;
 
     @Transactional(readOnly = true)
     public List<BookingDTO> getAllBookings() {
@@ -38,7 +41,7 @@ public class BookingService {
     @Transactional(readOnly = true)
     public BookingDTO getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đặt sân với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay dat san voi ID: " + id));
         return BookingDTO.fromEntity(booking);
     }
 
@@ -76,61 +79,60 @@ public class BookingService {
                 .filter(b -> b.getStatus() != Booking.BookingStatus.CANCELLED)
                 .map(b -> Map.of(
                         "startTime", b.getStartTime().toString(),
-                        "endTime",   b.getEndTime().toString()
+                        "endTime", b.getEndTime().toString()
                 ))
                 .collect(Collectors.toList());
     }
 
     public BookingDTO createBooking(BookingDTO bookingDTO, String holdId) {
-        // Validate court exists
         Court court = courtRepository.findById(bookingDTO.getCourtId())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sân với ID: " + bookingDTO.getCourtId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay san voi ID: " + bookingDTO.getCourtId()));
 
-        // Validate time
         if (!bookingDTO.getStartTime().isBefore(bookingDTO.getEndTime())) {
-            throw new BadRequestException("Giờ bắt đầu phải trước giờ kết thúc");
+            throw new BadRequestException("Gio bat dau phai truoc gio ket thuc");
         }
 
-        // If holdId is provided, verify it — otherwise fall back to DB overlap check
         if (holdId != null && !holdId.isBlank()) {
             boolean holdValid = bookingHoldService.confirmHold(holdId);
             if (!holdValid) {
-                throw new BadRequestException("Giữ chỗ đã hết hạn hoặc không hợp lệ. Vui lòng giữ chỗ lại.");
+                throw new BadRequestException("Giu cho da het han hoac khong hop le. Vui long giu cho lai.");
             }
         } else {
-            // Legacy path: check DB overlaps directly
-            List<Booking> dayBookings = bookingRepository.findByCourtIdAndBookingDate(bookingDTO.getCourtId(), bookingDTO.getBookingDate());
+            List<Booking> dayBookings = bookingRepository.findByCourtIdAndBookingDate(
+                    bookingDTO.getCourtId(),
+                    bookingDTO.getBookingDate()
+            );
             boolean hasOverlap = dayBookings.stream()
                     .filter(b -> b.getStatus() != Booking.BookingStatus.CANCELLED)
-                    .anyMatch(b -> bookingDTO.getStartTime().isBefore(b.getEndTime()) && bookingDTO.getEndTime().isAfter(b.getStartTime()));
+                    .anyMatch(b -> bookingDTO.getStartTime().isBefore(b.getEndTime())
+                            && bookingDTO.getEndTime().isAfter(b.getStartTime()));
 
             if (hasOverlap) {
-                throw new BadRequestException("Sân đã được đặt trong khung giờ này. Vui lòng chọn khung giờ khác.");
+                throw new BadRequestException("San da duoc dat trong khung gio nay. Vui long chon khung gio khac.");
             }
         }
 
-        // Calculate total price
         long minutes = Duration.between(bookingDTO.getStartTime(), bookingDTO.getEndTime()).toMinutes();
         double totalPrice = (minutes / 60.0) * court.getPricePerHour();
 
-        // Apply membership discount
         if (bookingDTO.getUserId() != null) {
             com.example.CauLongVui.entity.User user = userRepository.findById(bookingDTO.getUserId()).orElse(null);
-            if (user != null && user.getMembershipTier() != null && 
-                user.getMembershipExpiry() != null && user.getMembershipExpiry().isAfter(java.time.LocalDateTime.now())) {
-                
+            if (user != null && user.getMembershipTier() != null
+                    && user.getMembershipExpiry() != null
+                    && user.getMembershipExpiry().isAfter(LocalDateTime.now())) {
                 if (user.getMembershipTier() == com.example.CauLongVui.entity.MembershipTier.PRO) {
-                    totalPrice *= 0.9; // 10% discount
+                    totalPrice *= 0.9;
                 } else if (user.getMembershipTier() == com.example.CauLongVui.entity.MembershipTier.VIP) {
-                    totalPrice *= 0.8; // 20% discount
+                    totalPrice *= 0.8;
                 }
             }
         }
 
         Booking booking = Booking.builder()
                 .court(court)
-                .user(bookingDTO.getUserId() != null ?
-                        userRepository.findById(bookingDTO.getUserId()).orElse(null) : null)
+                .user(bookingDTO.getUserId() != null
+                        ? userRepository.findById(bookingDTO.getUserId()).orElse(null)
+                        : null)
                 .customerName(bookingDTO.getCustomerName())
                 .customerPhone(bookingDTO.getCustomerPhone())
                 .bookingDate(bookingDTO.getBookingDate())
@@ -138,27 +140,73 @@ public class BookingService {
                 .endTime(bookingDTO.getEndTime())
                 .totalPrice(totalPrice)
                 .status(Booking.BookingStatus.PENDING)
+                .paymentMethod(bookingDTO.getPaymentMethod())
                 .build();
 
         return BookingDTO.fromEntity(bookingRepository.save(booking));
     }
 
-    /** Overload for backward compatibility (no holdId). */
     public BookingDTO createBooking(BookingDTO bookingDTO) {
         return createBooking(bookingDTO, null);
     }
 
     public BookingDTO updateBookingStatus(Long id, Booking.BookingStatus status) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đặt sân với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay dat san voi ID: " + id));
+
+        if (status == Booking.BookingStatus.CANCELLED
+                && booking.getStatus() != Booking.BookingStatus.CANCELLED
+                && booking.getPaidAt() != null
+                && booking.getRefundedAt() == null
+                && booking.getUser() != null
+                && booking.getTotalPrice() != null
+                && booking.getTotalPrice() > 0) {
+            walletService.refundToWallet(
+                    booking.getUser().getId(),
+                    BigDecimal.valueOf(booking.getTotalPrice()),
+                    "BOOKING-" + booking.getId(),
+                    "Hoan tien booking #" + booking.getId()
+            );
+            booking.setRefundedAt(LocalDateTime.now());
+        }
+
         booking.setStatus(status);
         return BookingDTO.fromEntity(bookingRepository.save(booking));
+    }
+
+    public BookingDTO markBookingPaid(Long id, Booking.PaymentMethod paymentMethod, String paymentReference) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay booking voi ID: " + id));
+
+        if (booking.getPaidAt() != null) {
+            return BookingDTO.fromEntity(booking);
+        }
+        if (booking.getStatus() == Booking.BookingStatus.CANCELLED) {
+            throw new BadRequestException("Booking da bi huy, khong the xac nhan thanh toan");
+        }
+
+        booking.setStatus(Booking.BookingStatus.CONFIRMED);
+        booking.setPaymentMethod(paymentMethod);
+        booking.setPaymentReference(paymentReference);
+        booking.setPaidAt(LocalDateTime.now());
+        return BookingDTO.fromEntity(bookingRepository.save(booking));
+    }
+
+    public BookingDTO markBookingPaymentFailed(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay booking voi ID: " + id));
+
+        if (booking.getPaidAt() == null && booking.getStatus() != Booking.BookingStatus.CANCELLED) {
+            booking.setStatus(Booking.BookingStatus.CANCELLED);
+            booking = bookingRepository.save(booking);
+        }
+        return BookingDTO.fromEntity(booking);
     }
 
     @Transactional
     public BookingDTO updateBookingToPass(Long id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đặt sân với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay dat san voi ID: " + id));
         booking.setIsPass(true);
         booking.setPassPrice(booking.getTotalPrice() != null ? booking.getTotalPrice() * 0.8 : 0.0);
         return BookingDTO.fromEntity(bookingRepository.save(booking));
@@ -167,9 +215,9 @@ public class BookingService {
     @Transactional
     public BookingDTO buyPassBooking(Long id, Long newUserId, String newCustomerName, String newCustomerPhone) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đặt sân với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay dat san voi ID: " + id));
         if (!Boolean.TRUE.equals(booking.getIsPass())) {
-            throw new BadRequestException("Sân này không được đăng bán lại.");
+            throw new BadRequestException("San nay khong duoc dang ban lai.");
         }
 
         booking.setIsPass(false);
@@ -177,7 +225,7 @@ public class BookingService {
             booking.setTotalPrice(booking.getPassPrice());
         }
         booking.setPassPrice(null);
-        
+
         if (newUserId != null) {
             booking.setUser(userRepository.findById(newUserId).orElse(null));
         }

@@ -788,7 +788,7 @@
       const res  = await fetch(`/api/bookings/${currentBookingId}/status?status=CANCELLED`, { method: 'PATCH' });
       const json = await res.json();
       if (!res.ok || !json.success) throw new Error(json.message || 'Hủy thất bại');
-      showToast('✅ Đã hủy đặt sân thành công!', 'success');
+      showToast('✅ Đã hủy đặt sân. Nếu booking đã thanh toán, tiền đã được hoàn về ví.', 'success');
       closeModal();
       fetchBookings();
     } catch (err) {

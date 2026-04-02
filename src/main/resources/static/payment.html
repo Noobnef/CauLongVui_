@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thanh toán – Cầu Lông Vui</title>
+  <title>Thanh toán - Cầu Lông Vui</title>
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -19,79 +19,94 @@
       justify-content: center;
       padding: 24px;
     }
-
     .result-card {
       background: #fff;
       border-radius: 20px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-      max-width: 480px;
+      max-width: 500px;
       width: 100%;
       overflow: hidden;
     }
-
-    /* ── Header ── */
     .result-header {
       padding: 40px 24px 32px;
       text-align: center;
     }
     .result-header.success { background: linear-gradient(135deg, #00a046, #00c853); }
-    .result-header.failed  { background: linear-gradient(135deg, #c0392b, #e74c3c); }
-
+    .result-header.failed { background: linear-gradient(135deg, #c0392b, #e74c3c); }
     .result-icon { font-size: 72px; margin-bottom: 12px; }
     .result-title { font-size: 26px; font-weight: 800; color: #fff; margin-bottom: 6px; }
-    .result-sub   { font-size: 14px; color: rgba(255,255,255,0.85); }
-
-    /* ── Body ── */
+    .result-sub { font-size: 14px; color: rgba(255,255,255,0.85); }
     .result-body { padding: 28px 32px; }
-
-    .momo-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: #ae2070; color: #fff;
-      padding: 6px 18px; border-radius: 20px;
-      font-size: 13px; font-weight: 700;
-      margin: 0 auto 24px; width: fit-content;
-      display: flex; justify-content: center;
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #e8f5ee;
+      color: #15803d;
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 0 auto 24px;
+      width: fit-content;
     }
-
     .info-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 0; border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
       font-size: 14px;
     }
     .info-row:last-of-type { border-bottom: none; }
     .info-label { color: #888; }
-    .info-value { font-weight: 700; color: #333; }
+    .info-value { font-weight: 700; color: #333; text-align: right; }
     .info-value.green { color: #27ae60; }
-    .info-value.pink  { color: #ae2070; font-size: 18px; }
-    .info-value.muted { color: #999; font-weight: 400; font-size: 13px; }
-
-    /* ── Buttons ── */
+    .info-value.money { color: #ae2070; font-size: 18px; }
     .btn-home {
-      display: block; width: 100%; padding: 14px;
+      display: block;
+      width: 100%;
+      padding: 14px;
       background: linear-gradient(135deg, #2d8a4e, #3aad62);
-      color: #fff; border: none; border-radius: 10px;
-      font-size: 15px; font-weight: 800; text-align: center;
-      text-decoration: none; margin-top: 20px; cursor: pointer;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: none;
+      margin-top: 20px;
+      cursor: pointer;
       transition: all 0.2s;
     }
     .btn-home:hover { filter: brightness(1.08); transform: translateY(-1px); }
-
-    .btn-retry {
-      display: block; width: 100%; padding: 12px;
-      background: transparent; color: #c0392b;
-      border: 1.5px solid #c0392b; border-radius: 10px;
-      font-size: 14px; font-weight: 600; text-align: center;
-      text-decoration: none; margin-top: 10px; cursor: pointer;
+    .btn-secondary {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: #c0392b;
+      border: 1.5px solid #c0392b;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      margin-top: 10px;
+      cursor: pointer;
       transition: all 0.2s;
     }
-    .btn-retry:hover { background: #fff5f5; }
-
-    /* Pending (loading) */
+    .btn-secondary:hover { background: #fff5f5; }
     .pending-wrap { text-align: center; padding: 40px; }
     .spinner {
-      width: 56px; height: 56px; border: 5px solid #e0e0e0;
-      border-top-color: #ae2070; border-radius: 50%;
-      animation: spin 0.9s linear infinite; margin: 0 auto 16px;
+      width: 56px;
+      height: 56px;
+      border: 5px solid #e0e0e0;
+      border-top-color: #ae2070;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -99,7 +114,6 @@
 <body>
 
 <div class="result-card" id="resultCard">
-  <!-- Pending: hiển thị khi chưa có kết quả từ MoMo -->
   <div class="pending-wrap" id="pendingView">
     <div class="spinner"></div>
     <p style="color:#555; font-size:15px; font-weight:600;">Đang kiểm tra kết quả thanh toán...</p>
@@ -107,98 +121,103 @@
 </div>
 
 <script>
-  const params   = new URLSearchParams(window.location.search);
-  const result   = params.get('result');
-  const orderId  = params.get('orderId')  || '';
-  const amount   = parseInt(params.get('amount')  || '0');
-  const transId  = params.get('transId') || '';
-  const message  = params.get('message') || '';
+  const params = new URLSearchParams(window.location.search);
+  const result = params.get('result');
+  const flow = params.get('flow') || 'payment';
+  const orderId = params.get('orderId') || '';
+  const amount = parseInt(params.get('amount') || '0', 10);
+  const transId = params.get('transId') || '';
+  const message = params.get('message') || '';
 
-  // Thông tin lưu từ booking-info.html
-  const courtName = localStorage.getItem('bk_courtName') || 'San cau long';
-  const custName  = localStorage.getItem('bk_name')      || '';
-  const custPhone = localStorage.getItem('bk_phone')     || '';
+  const courtName = localStorage.getItem('bk_courtName') || 'Sân cầu lông';
+  const custName = localStorage.getItem('bk_name') || '';
+  const custPhone = localStorage.getItem('bk_phone') || '';
 
   function fmt(n) {
     return n > 0 ? n.toLocaleString('vi-VN') + ' đ' : '—';
   }
 
-  function renderSuccess() {
-    const isMembership = orderId.startsWith('MB-');
-    const title = isMembership ? 'Nâng cấp tài khoản thành công!' : 'Thanh toán thành công!';
-    const sub = isMembership ? 'Gói hội viên của bạn đã được kích hoạt' : 'Đặt sân của bạn đã được xác nhận';
-    const icon = isMembership ? '💎' : '✅';
+  function flowMeta() {
+    if (flow === 'wallet-topup') {
+      return {
+        icon: '💳',
+        title: 'Nạp tiền thành công!',
+        sub: 'Số dư ví đã được cập nhật.',
+        badge: 'Ví điện tử nội bộ',
+        primaryHref: '/profile.html#wallet-section',
+        primaryText: 'Mở ví của tôi',
+        secondaryHref: '/',
+        secondaryText: 'Về trang chủ'
+      };
+    }
+    if (flow === 'wallet-booking') {
+      return {
+        icon: '🏸',
+        title: 'Thanh toán bằng ví thành công!',
+        sub: 'Booking của bạn đã được xác nhận ngay lập tức.',
+        badge: 'Thanh toán từ ví',
+        primaryHref: '/my-bookings.html',
+        primaryText: 'Xem lịch đặt của tôi',
+        secondaryHref: '/profile.html#wallet-section',
+        secondaryText: 'Kiểm tra số dư ví'
+      };
+    }
+    if (flow === 'membership') {
+      return {
+        icon: '💎',
+        title: 'Nâng cấp tài khoản thành công!',
+        sub: 'Gói hội viên của bạn đã được kích hoạt.',
+        badge: 'Thanh toán hội viên',
+        primaryHref: '/',
+        primaryText: 'Về trang chủ',
+        secondaryHref: '/membership.html',
+        secondaryText: 'Xem gói hội viên'
+      };
+    }
+    return {
+      icon: '✅',
+      title: 'Thanh toán thành công!',
+      sub: 'Đặt sân của bạn đã được xác nhận.',
+      badge: 'Thanh toán hoàn tất',
+      primaryHref: '/',
+      primaryText: 'Về trang chủ',
+      secondaryHref: '/my-bookings.html',
+      secondaryText: 'Xem lịch đặt của tôi'
+    };
+  }
 
+  function renderSuccess() {
+    const meta = flowMeta();
     document.getElementById('resultCard').innerHTML = `
       <div class="result-header success">
-        <div class="result-icon">${icon}</div>
-        <div class="result-title">${title}</div>
-        <div class="result-sub">${sub}</div>
+        <div class="result-icon">${meta.icon}</div>
+        <div class="result-title">${meta.title}</div>
+        <div class="result-sub">${meta.sub}</div>
       </div>
       <div class="result-body">
-        <div class="momo-badge">✨ Thanh toán hoàn tất</div>
-
-        <div class="info-row"><span class="info-label">Mã đơn hàng</span><span class="info-value">${orderId}</span></div>
-        ${transId ? `<div class="info-row"><span class="info-label">Mã giao dịch</span><span class="info-value green">${transId}</span></div>` : ''}
-        ${!isMembership ? `
+        <div class="status-badge">${meta.badge}</div>
+        <div class="info-row"><span class="info-label">Mã giao dịch</span><span class="info-value">${orderId || '—'}</span></div>
+        ${transId ? `<div class="info-row"><span class="info-label">Mã thanh toán</span><span class="info-value green">${transId}</span></div>` : ''}
+        ${(flow === 'payment' || flow === 'wallet-booking') ? `
           <div class="info-row"><span class="info-label">Sân đặt</span><span class="info-value">${courtName}</span></div>
-          <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value">${custName} – ${custPhone}</span></div>
+          <div class="info-row"><span class="info-label">Khách hàng</span><span class="info-value">${custName || 'Khách'} ${custPhone ? `- ${custPhone}` : ''}</span></div>
         ` : ''}
-        <div class="info-row"><span class="info-label">Số tiền</span><span class="info-value pink">${fmt(amount)}</span></div>
+        <div class="info-row"><span class="info-label">Số tiền</span><span class="info-value money">${fmt(amount)}</span></div>
         <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value green">Thành công</span></div>
+        <a href="${meta.primaryHref}" class="btn-home">${meta.primaryText}</a>
+        <a href="${meta.secondaryHref}" class="btn-secondary">${meta.secondaryText}</a>
+      </div>
+    `;
 
-        <a href="/" class="btn-home">🏠 Về trang chủ</a>
-        ${!isMembership ? `
-          <a href="/my-bookings.html" class="btn-retry" style="color: var(--green); border-color: var(--green);">Xem lịch đặt của tôi</a>
-        ` : ''}
-      </div>`;
-
-      // Nếu là mua gói hội viên, cập nhật lại thông tin user trong localStorage
-      if (isMembership) {
-          refreshUserSession();
-      }
-
-      // ── AUTOCREATE MATCHMAKING ── //
-      const gkPendingStr = localStorage.getItem('gk_pending');
-      const userStr = localStorage.getItem('currentUser');
-      if (gkPendingStr) {
-          const gk = JSON.parse(gkPendingStr);
-          const u = (userStr && userStr !== "null") ? JSON.parse(userStr) : null;
-          
-          const now = new Date();
-          const localToday = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-
-          const payload = {
-              userId: u ? u.id : 0,  // 0 or null for guest
-              authorName: (u && u.fullName) ? u.fullName : custName,
-              title: gk.title,
-              phoneContact: (u && u.phone) ? u.phone : custPhone,
-              courtName: courtName,
-              playDate: localStorage.getItem('bk_dateRaw') || localToday,
-              startTime: localStorage.getItem('bk_startTime'),
-              endTime: localStorage.getItem('bk_endTime'),
-              level: gk.level,
-              requiredPlayers: gk.requiredPlayers,
-              costPerPerson: gk.costPerPerson,
-              status: 'OPEN'
-          };
-
-          fetch('/api/matchmaking', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify(payload)
-          }).then(res => res.json()).then(json => {
-              if(json.success) {
-                  const bd = document.querySelector('.result-body');
-                  if(bd) bd.innerHTML += `<div style="margin-top:20px;padding:12px;background:#fefce8;border-radius:10px;text-align:center;border:1px dashed #eab308;color:#a16207;font-size:13px;font-weight:700;">🤝 Hệ thống đã đăng tự động TÌM ĐỒNG ĐỘI lên Sàn Ghép Kèo. <br><a href="/ghep-keo.html" style="color:var(--green);text-decoration:underline;">Tới Sàn Ghép Kèo</a></div>`;
-              }
-          }).catch(err => console.error(err))
-          .finally(() => localStorage.removeItem('gk_pending'));
-      }
+    refreshSession();
+    maybeCreateMatchmaking();
   }
 
   function renderFailed() {
-    const isMembership = orderId.startsWith('MB-');
+    const retryHref = flow === 'wallet-topup'
+      ? '/profile.html#wallet-section'
+      : (flow === 'membership' ? '/membership.html' : '/booking-info.html');
+
     document.getElementById('resultCard').innerHTML = `
       <div class="result-header failed">
         <div class="result-icon">❌</div>
@@ -206,40 +225,70 @@
         <div class="result-sub">${message || 'Giao dịch không thành công'}</div>
       </div>
       <div class="result-body">
-        <div class="momo-badge">Thanh toán qua Ví MoMo</div>
-
-        <div class="info-row"><span class="info-label">Mã đơn hàng</span><span class="info-value">${orderId || '—'}</span></div>
-        ${!isMembership ? `<div class="info-row"><span class="info-label">Sân đặt</span><span class="info-value">${courtName}</span></div>` : ''}
-        <div class="info-row"><span class="info-label">Số tiền</span><span class="info-value pink">${fmt(amount)}</span></div>
-        <div class="info-row"><span class="info-label">Trạng thái</span><span style="color:#c0392b;font-weight:700;">Thất bại</span></div>
-
+        <div class="status-badge" style="background:#fde8e8;color:#b91c1c;">Giao dịch lỗi</div>
+        <div class="info-row"><span class="info-label">Mã giao dịch</span><span class="info-value">${orderId || '—'}</span></div>
+        <div class="info-row"><span class="info-label">Số tiền</span><span class="info-value money">${fmt(amount)}</span></div>
+        <div class="info-row"><span class="info-label">Trạng thái</span><span class="info-value" style="color:#c0392b;">Thất bại</span></div>
         <a href="/" class="btn-home">Về trang chủ</a>
-        <a href="${isMembership ? '/membership.html' : '/booking-info.html'}" class="btn-retry">Thử lại</a>
-      </div>`;
+        <a href="${retryHref}" class="btn-secondary">Thử lại</a>
+      </div>
+    `;
   }
 
-  async function refreshUserSession() {
-      const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
-      if (!user) return;
-      try {
-          const res = await fetch(`/api/users/${user.id}`);
-          const json = await res.json();
-          if (res.ok && json.success) {
-              localStorage.setItem('currentUser', JSON.stringify(json.data));
-              console.log('User session refreshed' );
-          }
-      } catch (err) {
-          console.error('Failed to refresh user session', err);
+  async function refreshSession() {
+    const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!user) return;
+    try {
+      const res = await fetch(`/api/users/${user.id}`);
+      const json = await res.json();
+      if (res.ok && json.success) {
+        localStorage.setItem('currentUser', JSON.stringify(json.data));
       }
+    } catch (err) {
+      console.error('Failed to refresh user session', err);
+    }
   }
 
-  // Quyết định hiển thị dựa vào query param ?result=
+  function maybeCreateMatchmaking() {
+    if (flow !== 'payment' && flow !== 'wallet-booking') return;
+
+    const gkPendingStr = localStorage.getItem('gk_pending');
+    const userStr = localStorage.getItem('currentUser');
+    if (!gkPendingStr) return;
+
+    const gk = JSON.parse(gkPendingStr);
+    const u = (userStr && userStr !== 'null') ? JSON.parse(userStr) : null;
+    const now = new Date();
+    const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    const payload = {
+      userId: u ? u.id : 0,
+      authorName: (u && u.fullName) ? u.fullName : custName,
+      title: gk.title,
+      phoneContact: (u && u.phone) ? u.phone : custPhone,
+      courtName: courtName,
+      playDate: localStorage.getItem('bk_dateRaw') || localToday,
+      startTime: localStorage.getItem('bk_startTime'),
+      endTime: localStorage.getItem('bk_endTime'),
+      level: gk.level,
+      requiredPlayers: gk.requiredPlayers,
+      costPerPerson: gk.costPerPerson,
+      status: 'OPEN'
+    };
+
+    fetch('/api/matchmaking', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).catch(err => console.error(err))
+      .finally(() => localStorage.removeItem('gk_pending'));
+  }
+
   if (result === 'success') {
     renderSuccess();
   } else if (result === 'failed') {
     renderFailed();
   }
-  // Nếu không có ?result thì hiển thị spinner (trường hợp vào thẳng URL)
 </script>
 </body>
 </html>

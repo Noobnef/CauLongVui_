@@ -32,6 +32,38 @@ nav.scrolled { box-shadow: var(--shadow-sm); }
 
 .nav-actions { display: flex; align-items: center; gap: 10px; }
 
+.nav-wallet-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(45,138,78,0.18);
+  background: linear-gradient(135deg, #f3fbf6, #e4f4ea);
+  color: var(--dark);
+  text-decoration: none;
+  min-width: 118px;
+}
+
+.nav-wallet-chip:hover {
+  border-color: var(--green);
+  box-shadow: 0 8px 18px rgba(45,138,78,0.14);
+}
+
+.nav-wallet-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+#navWalletBalance {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--green);
+}
+
 .btn-login {
   text-decoration: none; color: var(--mid); font-weight: 600; font-size: 14px;
   padding: 8px 18px; border-radius: var(--r-xl);
@@ -73,6 +105,8 @@ footer .logo span { color: var(--green-light); }
 @media (max-width: 900px) {
   nav { padding: 0 20px; }
   .nav-links { display: none; }
+  .nav-wallet-chip { min-width: unset; padding: 8px 12px; }
+  .nav-wallet-label { display: none; }
   footer { flex-direction: column; align-items: flex-start; }
 }
 

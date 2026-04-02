@@ -16,11 +16,11 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final WalletService walletService;
 
-    // ── Đăng ký tài khoản mới (mặc định role CUSTOMER)
     public AuthResponse register(RegisterRequest req) {
         if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email đã được sử dụng: " + req.getEmail());
+            throw new IllegalArgumentException("Email da duoc su dung: " + req.getEmail());
         }
 
         User user = User.builder()
@@ -32,59 +32,53 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-        return toResponse(user, "Đăng ký thành công! Chào mừng bạn đến với Cầu Lông Vui");
+        walletService.createWalletForUser(user);
+        return toResponse(user, "Dang ky thanh cong! Chao mung ban den voi Cau Long Vui");
     }
 
-    // ── Đăng nhập
     public AuthResponse login(LoginRequest req) {
         User user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Email hoặc mật khẩu không chính xác"));
+                .orElseThrow(() -> new IllegalArgumentException("Email hoac mat khau khong chinh xac"));
 
         if (!user.getActive()) {
-            throw new IllegalArgumentException("Tài khoản của bạn đã bị vô hiệu hóa");
+            throw new IllegalArgumentException("Tai khoan cua ban da bi vo hieu hoa");
         }
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("Email hoặc mật khẩu không chính xác");
+            throw new IllegalArgumentException("Email hoac mat khau khong chinh xac");
         }
 
-        return toResponse(user, "Đăng nhập thành công! Xin chào, " + user.getFullName());
+        return toResponse(user, "Dang nhap thanh cong! Xin chao, " + user.getFullName());
     }
 
-    // ── Lấy thông tin user theo ID
     public AuthResponse getById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Nguoi dung khong ton tai"));
         return toResponse(user, null);
     }
 
-    // ── Cập nhật thông tin cá nhân
     public AuthResponse updateProfile(UpdateProfileRequest req) {
         User user = userRepository.findById(req.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Nguoi dung khong ton tai"));
 
-        // Cập nhật họ tên
         if (req.getFullName() != null && !req.getFullName().isBlank()) {
             user.setFullName(req.getFullName().trim());
         }
-        // Cập nhật số điện thoại
         if (req.getPhone() != null) {
             user.setPhone(req.getPhone().trim().isEmpty() ? null : req.getPhone().trim());
         }
-        // Đổi mật khẩu (chỉ khi client có gửi newPassword)
         if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
             if (req.getCurrentPassword() == null
                     || !passwordEncoder.matches(req.getCurrentPassword(), user.getPassword())) {
-                throw new IllegalArgumentException("Mật khẩu hiện tại không đúng");
+                throw new IllegalArgumentException("Mat khau hien tai khong dung");
             }
             user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         }
 
         userRepository.save(user);
-        return toResponse(user, "Cập nhật thông tin thành công");
+        return toResponse(user, "Cap nhat thong tin thanh cong");
     }
 
-    // ── Helper
     private AuthResponse toResponse(User user, String message) {
         return AuthResponse.builder()
                 .id(user.getId())
@@ -94,6 +88,7 @@ public class AuthService {
                 .role(user.getRole())
                 .membershipTier(user.getMembershipTier())
                 .membershipExpiry(user.getMembershipExpiry())
+                .walletBalance(walletService.getBalanceForUser(user.getId()))
                 .message(message)
                 .build();
     }

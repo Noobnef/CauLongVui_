@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Data
@@ -27,6 +28,10 @@ public class BookingDTO {
     private Double totalPrice;
     private Boolean isPass;
     private Double passPrice;
+    private Booking.PaymentMethod paymentMethod;
+    private String paymentReference;
+    private LocalDateTime paidAt;
+    private LocalDateTime refundedAt;
 
     public static BookingDTO fromEntity(Booking booking) {
         return BookingDTO.builder()
@@ -43,6 +48,10 @@ public class BookingDTO {
                 .totalPrice(booking.getTotalPrice())
                 .isPass(booking.getIsPass())
                 .passPrice(booking.getPassPrice())
+                .paymentMethod(booking.getPaymentMethod())
+                .paymentReference(booking.getPaymentReference())
+                .paidAt(booking.getPaidAt())
+                .refundedAt(booking.getRefundedAt())
                 .build();
     }
 }

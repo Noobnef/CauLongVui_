@@ -4,6 +4,7 @@ import com.example.CauLongVui.dto.ApiResponse;
 import com.example.CauLongVui.dto.AuthResponse;
 import com.example.CauLongVui.entity.User;
 import com.example.CauLongVui.repository.UserRepository;
+import com.example.CauLongVui.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +18,8 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final WalletService walletService;
 
-    // GET /api/users — Lấy tất cả người dùng
     @GetMapping
     public ResponseEntity<ApiResponse<List<AuthResponse>>> getAllUsers() {
         List<AuthResponse> users = userRepository.findAll().stream()
@@ -28,18 +29,19 @@ public class UserController {
                         .email(u.getEmail())
                         .phone(u.getPhone())
                         .role(u.getRole())
+                        .walletBalance(walletService.getBalanceForUser(u.getId()))
                         .build())
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success(users));
     }
 
-    // PATCH /api/users/{id}/role — Cập nhật quyền người dùng
     @PatchMapping("/{id}/role")
     public ResponseEntity<ApiResponse<AuthResponse>> updateRole(
             @PathVariable Long id,
-            @RequestParam String role) {
+            @RequestParam String role
+    ) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Nguoi dung khong ton tai"));
         user.setRole(User.Role.valueOf(role.toUpperCase()));
         userRepository.save(user);
         AuthResponse resp = AuthResponse.builder()
@@ -48,17 +50,18 @@ public class UserController {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .walletBalance(walletService.getBalanceForUser(user.getId()))
                 .build();
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật quyền thành công", resp));
+        return ResponseEntity.ok(ApiResponse.success("Cap nhat quyen thanh cong", resp));
     }
 
-    // PATCH /api/users/{id}/active — Bật/tắt tài khoản
     @PatchMapping("/{id}/active")
     public ResponseEntity<ApiResponse<AuthResponse>> toggleActive(
             @PathVariable Long id,
-            @RequestParam boolean active) {
+            @RequestParam boolean active
+    ) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Nguoi dung khong ton tai"));
         user.setActive(active);
         userRepository.save(user);
         AuthResponse resp = AuthResponse.builder()
@@ -69,16 +72,18 @@ public class UserController {
                 .role(user.getRole())
                 .membershipTier(user.getMembershipTier())
                 .membershipExpiry(user.getMembershipExpiry())
+                .walletBalance(walletService.getBalanceForUser(user.getId()))
                 .build();
         return ResponseEntity.ok(ApiResponse.success(
-                active ? "Đã kích hoạt tài khoản" : "Đã vô hiệu hóa tài khoản", resp));
+                active ? "Da kich hoat tai khoan" : "Da vo hieu hoa tai khoan",
+                resp
+        ));
     }
 
-    // GET /api/users/{id} — Lấy thông tin chi tiết người dùng
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AuthResponse>> getUserById(@PathVariable Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Người dùng không tồn tại"));
+                .orElseThrow(() -> new IllegalArgumentException("Nguoi dung khong ton tai"));
         AuthResponse resp = AuthResponse.builder()
                 .id(user.getId())
                 .fullName(user.getFullName())
@@ -87,6 +92,7 @@ public class UserController {
                 .role(user.getRole())
                 .membershipTier(user.getMembershipTier())
                 .membershipExpiry(user.getMembershipExpiry())
+                .walletBalance(walletService.getBalanceForUser(user.getId()))
                 .build();
         return ResponseEntity.ok(ApiResponse.success(resp));
     }
